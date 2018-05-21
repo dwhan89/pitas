@@ -1,4 +1,4 @@
-import cmblens
+import cmblens, cusps
 from cusps import power
 from actsims import simTools as act_sim
 from enlib import enmap, curvedsky
@@ -50,7 +50,7 @@ l_th = np.arange(10000)
 theo = cmblens.theory.load_theory_cls('cosmo2017_10K_acc3_unlensed_cmb', unit='camb', l_interp=l_th)
 l_th, cltt_th, dltt_th = theo['l'], theo['cltt'], theo['dltt']
 
-deg      = 20
+deg      = 5
 bin_file ='DELTA50_0_2000'
 ps       = cltt_th.reshape((1,1,cltt_th.size))
 coords  = np.array([[-deg/2.,-deg/2.],[deg/2.,deg/2.]])
@@ -91,18 +91,26 @@ def get_flat_power(map1, map2=None):
     return binner.bin(power2d)
 
 
+taper     = np.ones(shape)
+taper, _ = maps.get_taper(shape)
+taper    = enmap.enmap(taper, wcs=wcs)
 
 st = stats.Stats(cmblens.mpi.comm)
 for sim_idx in subtasks:
     log.info("processing %d" %sim_idx)
-    imap = get_sim(sim_idx, mode='actsim') 
+    imap  = get_sim(sim_idx, mode='actsim') 
+    imap *= taper
+    
     if sim_idx == 0:
         io.high_res_plot_img(imap, output_path('tmap_unlen_%d.png'%sim_idx), down=3)
-    
+
     l, cl = power.get_raw_power(imap, lmax=lmax)
     lbin, cl = quick_binner.binned(l, cl)
+    st.add_to_stats("dltt_raw", cl2dl(lbin, cl)) 
 
-    st.add_to_stats("dltt", cl2dl(lbin, cl)) 
+    lbin, cl = power.get_power(imap, 'test', taper, taper, bin_edges, polcomb='TT', lmax=lmax)
+    cl *= cusps.util.get_fsky(imap)
+    st.add_to_stats("dltt_decov", cl2dl(lbin, cl)) 
 
     l, cl = get_flat_power(imap)
     st.add_to_stats('dltt_flat', cl2dl(lbin, cl))   
@@ -122,10 +130,11 @@ def add_with_err(plotter, st, l, key, **kwargs):
 if cmblens.mpi.rank == 0:
     log.info("plotting")
 
-    plotter = cmblens.visualize.plotter(yscale='log')
+    plotter = cusps.visualize.plotter(yscale='log')
     plotter.add_data(l_th, dltt_th, label='DlTT (Theo)') 
-    add_with_err(plotter, st, lbin, 'dltt', label='DlTT (CUSPS)') 
+    add_with_err(plotter, st, lbin, 'dltt_raw', label='DlTT (CUSPS RAW)') 
     add_with_err(plotter, st, lbin, 'dltt_flat', label='DlTT (FC)')
+    add_with_err(plotter, st, lbin, 'dltt_decov', label='DlTT (CUSPS_DECOV)')
     plotter.set_xlim([0,5000])
     plotter.show_legends()
     plotter.save(output_path("raw_spec.png"))

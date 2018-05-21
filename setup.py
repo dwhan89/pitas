@@ -9,7 +9,7 @@ except ImportError:
 
 config = {
     'description': 'CUSPS: Curved Sky Power Spectrum',
-    'author': "Dongwon 'DW' HAN",
+    'author':  "Thibaut Louis, Dongwon 'DW' HAN",
     'url': 'https://github.com/dwhan89/cusps',
     'download_url': 'https://github.com/dwhan89/cusps',
     'author_email': 'dongwon.han@stonybrook.edu',
@@ -22,7 +22,8 @@ config = {
         ],
     'packages': [
         'cusps',
-        'cusps.wigner'
+        'cusps.wigner',
+        'cusps.mcm_core'
         ],
     'scripts': [],
     'name': 'cusps'
