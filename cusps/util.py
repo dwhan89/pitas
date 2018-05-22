@@ -27,6 +27,26 @@ def check_None(*args):
         assert(arg is not None)
     return True
 
+############# maps #################
+def qu2eb(qmap, umap, iau=True, copy=True, nthread=0):
+    nshape      = (2,) + qmap.shape
+    wcs         = qmap.wcs
+    temp        = enmap.empty(nshape, wcs)
+       
+    temp[0,:,:] = qmap.copy() if copy else qmap
+    temp[1,:,:] = umap.copy() if copy else umap
+
+
+    temp = enmap.samewcs(enmap.fft(temp,nthread=nthread,normalize=True), temp)
+    rot  = enmap.queb_rotmat(enmap.lmap(nshape,wcs),iau=iau)
+    temp = enmap.map_mul(rot, temp)
+    temp = enmap.ifft(temp, nthread=nthread).real
+
+    emap, bmap = temp[0,:,:], temp[1,:,:]
+    
+    return (emap, bmap)
+
+
 ############# misc #################
 
 def get_from_dict(nested_dict, keys, safe=True):
