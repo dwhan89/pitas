@@ -17,10 +17,12 @@ class CUSPS(object):
         self.lmax          = lmax
 
         # binner set-up 
-        bin_edges      = bin_edges.astype(np.int)
+        bin_edges       = bin_edges.astype(np.int)
         if bin_edges[0] < 2: bin_edges[0] = 2
-        self.bin_edges = bin_edges[np.where(bin_edges <= lmax)]
-        self.binner         = stats.bin1D(bin_edges)
+        self.bin_edges  = bin_edges[np.where(bin_edges <= lmax)]
+        self.bin_center = (bin_edges[1:] + bin_edges[:-1])/2.
+        self.binner     = stats.bin1D(bin_edges)
+        
 
         self.transfer      = transfer
         
@@ -31,6 +33,9 @@ class CUSPS(object):
         self.mcm_tp_inv    = ret[1].copy()
         self.mcm_pp_inv    = ret[2].copy()
         del ret
+
+        self.bbl           = get_bbl(self.mcm_identifier, self.window_temp, self.window_pol, self.bin_edges,\
+                            None, lmax, transfer, False)
 
         mcm_invs           = {} 
         mcm_invs[0]        = self.mcm_tt_inv
@@ -62,6 +67,12 @@ class CUSPS(object):
 
         return mcm_inv
     
+    def bin_theory(self, l_th, cl_th):
+        assert(l_th[0] == 0)
+        clbin_th = np.dot(self.bbl, cl_th[:self.lmax])
+
+        return (self.bin_center.copy(), clbin_th)
+
     def get_power(self, emap1, emap2=None, polcomb='00', pure_eb=True):
         #
         # This function most likely works, but very clunky.
@@ -99,6 +110,7 @@ class CUSPS(object):
         
         return (lbin, clee, cleb, clbb)
 
+'''
 def get_power(emap1, mcm_identifier, window_temp, window_pol, bin_edges, polcomb='00', lmax=5000, transfer=None, emap2=None, overwrite=False, pure_eb=True):
     #
     # This function most likely works, but very clunky.
@@ -143,7 +155,30 @@ def get_power(emap1, mcm_identifier, window_temp, window_pol, bin_edges, polcomb
 
 
     return (lbin, clbin)
+'''
 
+def get_bbl(mcm_identifier, window_temp=None, window_pol=None, bin_edges=None, output_dir=None, lmax=None, transfer=None, overwrite=False): 
+    if output_dir is None: output_dir = cusps.config.get_output_dir()
+    if mcm_identifier is not None: mcm_dir = os.path.join(output_dir, mcm_identifier)
+    if cusps.mpi.rank == 0: print "[get_bbl] mcm directory: %s" %mcm_dir
+
+    file_name = os.path.join(mcm_dir, 'curved_full_BBL.dat')
+    bbl = None
+    try:
+        assert(not overwrite) 
+        print "trying to load %s" %file_name
+        bbl = np.loadtxt(file_name)
+    except:
+        if cusps.mpi.rank == 0: 
+            print "failed to load mcm. calculating mcm"
+            cusps.util.check_None(window_temp, window_pol, bin_edges, mcm_dir)
+            mcm.generate_mcm(window_temp, window_pol, bin_edges, mcm_dir, lmax=lmax, transfer=transfer)
+            print "finish calculating mcm"
+        else: pass
+        cusps.mpi.barrier()
+
+        bbl = np.loadtxt(file_name)
+    return bbl
 
 def get_mcm_inv(mcm_identifier, window_temp=None, window_pol=None, bin_edges=None, output_dir=None, lmax=None, transfer=None, overwrite=False):
     if output_dir is None: output_dir = cusps.config.get_output_dir()

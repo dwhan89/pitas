@@ -46,7 +46,8 @@ cmblens.util.create_dir(output_dir)
 cmb_dir        = '/global/cscratch1/sd/engelen/simsS1516_v0.2/data/'
 
 # load theory
-l_th = np.arange(10000)
+lmax = 6000
+l_th = np.arange(lmax)
 theo = cmblens.theory.load_theory_cls('cosmo2017_10K_acc3_unlensed_cmb', unit='camb', l_interp=l_th)
 
 deg      = 15
@@ -54,8 +55,7 @@ deg      = 15
 #ps       = cltt_th.reshape((1,1,cltt_th.size))
 coords  = np.array([[-deg/2.,-deg/2.],[deg/2.,deg/2.]])
 proj     = 'car'
-res      = 1
-lmax     = 6000
+#res      = 1
 
 
 overwrite = False
@@ -112,25 +112,18 @@ temp_map, _, _  = get_sim(0, mode='actsim')
 shape, wcs = temp_map.shape, temp_map.wcs
 taper, _   = maps.get_taper(shape)
 taper      = enmap.enmap(taper, wcs=wcs)
-
+fsky       = np.sum(taper)/taper.size
+#fsky       = np.mean(fsky**2)
 cusps_fc = cusps.power.CUSPS(mcm_identifier, taper, taper, bin_edges, lmax, None, overwrite)
 binner   = cusps_fc.binner
-
-
-theo_bin = {}
-for key in theo.keys():
-    if key == 'l': continue
-    lbin_th, clbin_th = binner.binned(l_th, theo[key])
-    
-    theo_bin['l'] = lbin_th
-    theo_bin[key] = clbin_th
 
 lbin = None
 def add_spectra(tmap, emap, bmap, deconv):
     cmb_dict = {'t': tmap, 'e': emap, 'b': bmap}
     polcombs = ['tt', 'te', 'ee', 'bb', 'pp']
     #polcombs = ['ee']
-
+    #polcombs=['tt']
+    
     global lbin 
     if not deconv:
         for polcomb in polcombs:
@@ -141,6 +134,7 @@ def add_spectra(tmap, emap, bmap, deconv):
 
             l, cl = power.get_raw_power(emap1, emap2=emap2, lmax=lmax)   
             lbin, clbin = binner.binned(l,cl)
+            clbin /= fsky
             st.add_to_stats('dl%s_raw'%polcomb, cl2dl(lbin, clbin))
 
             theo_idx  = 'cl%s'% polcomb
@@ -154,7 +148,7 @@ def add_spectra(tmap, emap, bmap, deconv):
             emap2 = cmb_dict[polcomb[1]] 
             print '[add_spectra]:', polcomb
             l, cl = cusps_fc.get_power(emap1, emap2=emap2, polcomb=polcomb.upper())
-            #cl /= 0.669
+            #cl    /= fsky
             lbin, clbin = binner.binned(l,cl)
             st.add_to_stats('dl%s_deconv'%polcomb, cl2dl(lbin, clbin))
 
@@ -164,23 +158,40 @@ def add_spectra(tmap, emap, bmap, deconv):
     
         if 'pp' in polcombs:
             print '[add_spectra]:', 'pp'
-            lbin, clee, cleb, clbb = cusps_fc.get_pureeb_power(emap, bmap)
+            lbin, clee, cleb, clbb = cusps_fc.get_pureeb_power(emap, bmap) 
+            #cleb    /= fsky
+            #clbb    /= fsky
+            #clee    /= fsky
+            
             st.add_to_stats('dlee_deconv', cl2dl(lbin, clee))
             st.add_to_stats('dleb_deconv', cl2dl(lbin, cleb))
             st.add_to_stats('dlbb_deconv', cl2dl(lbin, clbb))
 
             theo_idx  = 'clee'
-            frac_diff =  (clbin - theo_bin[theo_idx])/theo_bin[theo_idx]
-            st.add_to_stats('frac%s_raw'%'ee', frac_diff)
+            frac_diff =  (clee - theo_bin[theo_idx])/theo_bin[theo_idx]
+            st.add_to_stats('frac%s_deconv'%'ee', frac_diff)
 
             theo_idx  = 'clbb'
-            frac_diff =  (clbin - theo_bin[theo_idx])/theo_bin[theo_idx]
-            st.add_to_stats('frac%s_raw'%'bb', frac_diff)
+            frac_diff =  (clbb - theo_bin[theo_idx])/theo_bin[theo_idx]
+            st.add_to_stats('frac%s_deconv'%'bb', frac_diff)
+
+theo_bin = {}
+for key in theo.keys():
+    if key == 'l': continue
+    lbin_th, clbin_th = cusps_fc.bin_theory(l_th, theo[key])
+    
+    theo_bin['l'] = lbin_th
+    theo_bin[key] = clbin_th
+
 
 st = stats.Stats(cmblens.mpi.comm)
 for sim_idx in subtasks:
     log.info("processing %d" %sim_idx)
     tmap, qmap, umap  = get_sim(sim_idx, mode='actsim') 
+    tmap -= np.mean(tmap)
+    qmap -= np.mean(qmap)
+    umap -= np.mean(umap)
+    qmap *= -1. 
     tmap *= taper
     qmap *= taper
     umap *= taper
@@ -213,7 +224,7 @@ for sim_idx in subtasks:
     #l, cl = get_flat_power(tmap)
     #st.add_to_stats('dltt_flat', cl2dl(lbin, cl))   
  
-
+cusps.mpi.barrier()
 st.get_stats()
 
 def add_with_err(plotter, st, l, key, **kwargs): 
@@ -234,7 +245,7 @@ if cmblens.mpi.rank == 0:
         #yscale = 'log' if polcomb is not 'te' else 'linear'
         plotter = cusps.visualize.plotter(yscale='linear')
         plotter.add_data(theo_bin['l'], theo_bin[prefix], label='Dl%s Binned Theory'%polcomb.upper()) 
-        #add_with_err(plotter, st, lbin, '%s_raw'%prefix, label='DlTT (CUSPS RAW)') 
+        #add_with_err(plotter, st, lbin, '%s_raw'%prefix, label='Dl%s (CUSPS RAW)'%polcomb.upper()) 
         #add_with_err(plotter, st, lbin, 'dltt_flat', label='DlTT (FC)')
         add_with_err(plotter, st, lbin, '%s_deconv'%prefix, label='Dl%s (CUSPS_DECOV)'%polcomb.upper())
         plotter.set_title('Curved Sky Dl_%s ' %polcomb.upper())
@@ -248,13 +259,14 @@ if cmblens.mpi.rank == 0:
     polcombs = ['tt', 'te', 'ee', 'bb']
     for polcomb in polcombs:
         prefix  = 'dl%s' % polcomb
-        plotter = cusps.visualize.plotter(yscale='linear')
+        plotter = cusps.visualize.plotter(yscale='linear') 
+        #add_with_err(plotter, st, lbin, 'frac%s_raw'%polcomb, label='Dl%s (CUSPS_RAW)'%polcomb.upper())
         add_with_err(plotter, st, lbin, 'frac%s_deconv'%polcomb, label='Dl%s (CUSPS_DECOV)'%polcomb.upper())
         plotter.set_title('Fractional Difference Dl_%s ' %polcomb.upper())
         plotter.set_xlabel(r'$l$') 
         plotter.set_ylabel(r'$(sim - theo)/theo$')
-        plotter.set_xlim([300,5000])
-        plotter.set_ylim([-0.2,0.2])
+        plotter.set_xlim([0,5000])
+        plotter.set_ylim([-0.1,0.1])
         plotter.hline(y=0, color='k')
         #add_with_err(plotter, st, lbin, 'dltt_flat', label='DlTT (FC)')
         plotter.show_legends()

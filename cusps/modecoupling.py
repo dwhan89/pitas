@@ -57,7 +57,13 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
     bin_mcm(mcm_tt, mbb_tt); bin_mcm(mcm_tp, mbb_tp)
     bin_mcm(mcm_pp_diag, mbb_pp_diag); bin_mcm(mcm_pp_offdiag, mbb_pp_offdiag)
 
+
+    # implement binning
+    #test binning matrix
+    mcm_core.binning_matrix(mcm_tt.T,bin_edges[:-1],bin_edges[1:],bin_sizes, bbl.T)
+    bbl = np.dot(np.linalg.inv(mbb_tt),bbl)
     # clean up
+
     del mcm_tt, mcm_tp, mcm_pp_diag, mcm_pp_offdiag
 
     # combine pol data
@@ -66,22 +72,13 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
     mbb_pp[2*nbin:3*nbin, :nbin] = mbb_pp[:nbin, 2*nbin:3*nbin]         = mbb_pp_offdiag
     mbb_pp[nbin:2*nbin, nbin:2*nbin]                                    = mbb_pp_diag-mbb_pp_offdiag 
 
-    def save_mbb(key, mbb):
+    def save_matrix(key, mbb):
         file_name = 'curved_full_%s.dat' %key
         file_name = os.path.join(mcm_dir, file_name)
         np.savetxt(file_name, mbb)
 
-    save_mbb("TT", mbb_tt); save_mbb("TP", mbb_tp); save_mbb("PP", mbb_pp)
-    save_mbb("TT_inv", np.linalg.inv(mbb_tt)) 
-    save_mbb("TP_inv", np.linalg.inv(mbb_tp))
-    save_mbb("PP_inv", np.linalg.inv(mbb_pp))
-
-    # implement binning
-    #test binning matrix
-    #mcm_code_full.binning_matrix(mcm.T,binLo,binHi,binsize, Bbl.T)
-
-    #inv=np.linalg.inv(mbb)
-    #Bbl=np.dot(inv,Bbl)
-    #np.save('%sBbl.%s_curved_T_%s_%s.dat'%(mbbDir,mbbFilename,arrayTag,spTag),mcm)
-
-
+    save_matrix("TT", mbb_tt); save_matrix("TP", mbb_tp); save_matrix("PP", mbb_pp)
+    save_matrix("TT_inv", np.linalg.inv(mbb_tt)) 
+    save_matrix("TP_inv", np.linalg.inv(mbb_tp))
+    save_matrix("PP_inv", np.linalg.inv(mbb_pp))
+    save_matrix("BBL", bbl) 

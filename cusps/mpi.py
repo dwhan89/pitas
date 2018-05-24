@@ -58,7 +58,7 @@ def init(switch = False):
         from  mpi4py import MPI
         comm    = MPI.COMM_WORLD
         rank    = comm.Get_rank()
-        size   = comm.Get_size()
+        size    = comm.Get_size()
         barrier = comm.Barrier
         print "MPI: rank %d is initalized" %rank
 

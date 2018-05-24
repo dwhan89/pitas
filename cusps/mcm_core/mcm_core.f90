@@ -82,7 +82,6 @@ subroutine binning_matrix(mcm, binLo,binHi, binsize, bbl)
             bbl(l1-1,b2)=bbl(l1-1,b2)/(binsize(b2)*1d0)
         end do
     end do
-
 end subroutine
 
 
