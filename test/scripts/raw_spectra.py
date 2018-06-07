@@ -120,9 +120,9 @@ binner   = cusps_fc.binner
 lbin = None
 def add_spectra(tmap, emap, bmap, deconv):
     cmb_dict = {'t': tmap, 'e': emap, 'b': bmap}
-    polcombs = ['tt', 'te', 'ee', 'bb', 'pp']
+    #polcombs = ['tt', 'te', 'ee', 'bb', 'pp']
     #polcombs = ['ee']
-    #polcombs=['tt']
+    polcombs=['tt']
     
     global lbin 
     if not deconv:
@@ -238,7 +238,7 @@ def add_with_err(plotter, st, l, key, **kwargs):
 
 if cmblens.mpi.rank == 0:
     log.info("plotting")
-    polcombs = ['tt', 'te', 'ee', 'bb']
+    polcombs = ['tt']#, 'te', 'ee', 'bb']
    
     for polcomb in polcombs:
         prefix  = 'dl%s' % polcomb
@@ -256,18 +256,35 @@ if cmblens.mpi.rank == 0:
         plotter.save(output_path("%s_spec.png"%prefix))
 
    
-    polcombs = ['tt', 'te', 'ee', 'bb']
+    polcombs = ['tt']#, 'te', 'ee', 'bb']
     for polcomb in polcombs:
         prefix  = 'dl%s' % polcomb
-        plotter = cusps.visualize.plotter(yscale='linear') 
+        plotter = cusps.visualize.plotter(figsize=(10, 8), yscale='linear') 
         #add_with_err(plotter, st, lbin, 'frac%s_raw'%polcomb, label='Dl%s (CUSPS_RAW)'%polcomb.upper())
-        add_with_err(plotter, st, lbin, 'frac%s_deconv'%polcomb, label='Dl%s (CUSPS_DECOV)'%polcomb.upper())
-        plotter.set_title('Fractional Difference Dl_%s ' %polcomb.upper())
-        plotter.set_xlabel(r'$l$') 
-        plotter.set_ylabel(r'$(sim - theo)/theo$')
+        add_with_err(plotter, st, lbin, 'frac%s_deconv'%polcomb, label='Dl%s (curved-sky ps)'%polcomb.upper())
+        plotter.set_title('Fractional Difference Dl_%s ' %polcomb.upper(), fontsize=22)
+        plotter.set_xlabel(r'$l$', fontsize=22) 
+        plotter.set_ylabel(r'$(sim - theo)/theo$', fontsize=22)
         plotter.set_xlim([0,5000])
-        plotter.set_ylim([-0.1,0.1])
+        plotter.set_ylim([-0.10,0.10])
         plotter.hline(y=0, color='k')
         #add_with_err(plotter, st, lbin, 'dltt_flat', label='DlTT (FC)')
-        plotter.show_legends()
-        plotter.save(output_path("frac_diff%s.png"%prefix))
+        plotter.show_legends(fontsize=18)
+        plotter.save(output_path("frac_diff%s_10.png"%prefix))
+
+
+    polcombs = ['tt']#, 'te', 'ee', 'bb']
+    for polcomb in polcombs:
+        prefix  = 'dl%s' % polcomb
+        plotter = cusps.visualize.plotter(figsize=(10, 8), yscale='linear') 
+        #add_with_err(plotter, st, lbin, 'frac%s_raw'%polcomb, label='Dl%s (CUSPS_RAW)'%polcomb.upper())
+        add_with_err(plotter, st, lbin, 'frac%s_deconv'%polcomb, label='Dl%s (curved-sky ps)'%polcomb.upper())
+        plotter.set_title('Fractional Difference Dl_%s ' %polcomb.upper(), fontsize=22)
+        plotter.set_xlabel(r'$l$', fontsize=22) 
+        plotter.set_ylabel(r'$(sim - theo)/theo$', fontsize=22)
+        plotter.set_xlim([0,5000])
+        plotter.set_ylim([-0.15,0.15])
+        plotter.hline(y=0, color='k')
+        #add_with_err(plotter, st, lbin, 'dltt_flat', label='DlTT (FC)')
+        plotter.show_legends(fontsize=18)
+        plotter.save(output_path("frac_diff%s_15.png"%prefix))
