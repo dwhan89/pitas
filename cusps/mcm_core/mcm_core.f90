@@ -55,7 +55,7 @@ subroutine bin_mcm(mcm, binLo,binHi, binsize, mbb)
         do b1=1,size(mbb,1)
             do l2=binLo(b2),binHi(b2)
                 do l1=binLo(b1),binHi(b1)
-                    mbb(b1,b2)=mbb(b1,b2) + mcm(l1-1,l2-1)*l2*(l2+1d0)/(l1*(l1+1d0)) !*mcm(l2-1,l3-1)
+                    mbb(b1,b2)=mbb(b1,b2) + mcm(l1-1,l2-1)!*l2*(l2+1d0)/(l1*(l1+1d0)) !*mcm(l2-1,l3-1)
                 end do
             end do
             mbb(b1,b2) = mbb(b1,b2) / binsize(b2)

@@ -68,7 +68,7 @@ class CUSPS(object):
         return mcm_inv
     
     def bin_theory(self, l_th, cl_th):
-        assert(l_th[0] == 0)
+        assert(l_th[0] == 2)
         clbin_th = np.dot(self.bbl, cl_th[:self.lmax])
 
         return (self.bin_center.copy(), clbin_th)
