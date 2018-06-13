@@ -3,6 +3,7 @@ from enlib import enmap,curvedsky
 from cusps.util import get_spectra
 from cusps.mcm_core import mcm_core
 import cusps, numpy as np, os 
+from orphics import stats
 
 def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, transfer=None):
     # expect enmap
@@ -20,6 +21,7 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
     bin_edges = bin_edges[np.where(bin_edges <= lmax)] 
     bin_sizes = bin_edges[1:] - bin_edges[:-1]
     assert((bin_sizes > 0).all())
+    binner    = stats.bin1D(bin_edges)
 
     nbin      = len(bin_edges) - 1
     assert(nbin > 0)
@@ -108,14 +110,18 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
         #gauss_mat_pp[:bbl_size,:] = gauss_mat_pp[bbl_size:2*bbl_size,:] \
         #        = gauss_mat_pp[2*bbl_size:3*bbl_size,:] = guass_mat[:,:]
         
+        bbl_tt_raw = np.dot(mcm_tt, guass_mat)
         del gauss_mat#, guass_mat_pp
     
         # start binning
         for l_cur in l_bbl:
             l_idx = l_cur - 2
-            bbl_tt[:,l_idx] = 
+            _, bbl_tt[:,l_idx] = binner.binned(bbl_tt_raw[:,l_idx])
         
+        del bbl_tt_raw
+        return bbl_tt
 
+    bbl_tt = np.dot(np.linalg.inv(mbb_tt), bbl_tt)
 
     
     def save_matrix(key, mbb):
@@ -128,4 +134,4 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
     save_matrix("TP_inv", np.linalg.inv(mbb_tp))
     save_matrix("PP_inv", np.linalg.inv(mbb_pp))
     save_matrix("BBL", bbl) 
-
+    save_matrix("BBLNEW", bbl_tt)
