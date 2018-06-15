@@ -75,3 +75,34 @@ class plotter(object):
         self.fig.savefig(output)
         self.clear()
 
+
+class plotter2D(plotter):
+    def __init__(self, **kwargs):
+
+        super(plotter2D, self).__init__(**kwargs)
+        self._cbar = None
+
+    def imshow(self, data, cmap='RdBu', aspect='equal', interpolation='nearest', **kwargs):
+        self._cbar = self.ax.imshow(data, cmap=cmap, aspect=aspect, interpolation=interpolation, **kwargs)
+
+
+    def pcolor(self, x, y, data, cmap='RdBu', **kwargs):
+        self._cbar = self.ax.pcolor(x, y, data, cmap=cmap, **kwargs)
+
+    def colorbar(self, **kwargs):
+        if self._cbar:
+            self.fig.colorbar(self._cbar, **kwargs)
+        else:
+            pass
+
+
+    def add_data(self, x,y, **kwargs):
+        raise NotImplemented("Not implemted for 2D plotter")
+
+    def add_err(self,x,y,yerr,ls='none',**kwargs):
+        raise NotImplemented("Not implemted for 2D plotter")
+
+    def clear(self):
+        super(plotter2D, self).clear()
+        self._cbar = None
+

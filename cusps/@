@@ -162,7 +162,7 @@ def get_bbl(mcm_identifier, window_temp=None, window_pol=None, bin_edges=None, o
     if mcm_identifier is not None: mcm_dir = os.path.join(output_dir, mcm_identifier)
     if cusps.mpi.rank == 0: print "[get_bbl] mcm directory: %s" %mcm_dir
 
-    file_name = os.path.join(mcm_dir, 'curved_full_BBLNEW.dat')
+    file_name = os.path.join(mcm_dir, 'curved_full_BBL.dat')
     bbl = None
     try:
         assert(not overwrite) 

@@ -70,7 +70,6 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
     bbl = np.dot(np.linalg.inv(mbb_tt),bbl)
     # clean up
 
-    del mcm_tt, mcm_tp, mcm_pp_diag, mcm_pp_offdiag
 
     # combine pol data
     def assamble_mat_pp(mat_pp_diag, mat_pp_offdiag):
@@ -83,51 +82,52 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
         return mat_pp
 
     mbb_pp = assamble_mat_pp(mbb_pp_diag, mbb_pp_offdiag)
-    
+
+ 
+    def save_matrix(key, mbb):
+        file_name = 'curved_full_%s.dat' %key
+        file_name = os.path.join(mcm_dir, file_name)
+        np.savetxt(file_name, mbb)
+
     def generate_bbl(mcm_tt, mcm_tp, mcm_pp_diag, mcm_pp_offdiag, lmax, bin_sizes):
-        nbin   = len(bin_sizes)
-        #mcm_pp = assamble_mat_pp(mcm_pp_diag, mcm_pp_offdiag)
+        # For now, I am just computing BBL from TT MCM. 
+        # But, technically, I will need to compute BBL matrix for TP and PP independently
+        
+        nbin            = len(bin_sizes)
+        bbl_size        = mcm_tt.shape[0]
+        l_bbl           = np.arange(bbl_size) + 2 # starts from l=2
+        gauss_mat       = np.zeros((bbl_size, bbl_size))
+        bbl_tt          = np.zeros((nbin, bbl_size)) 
         #bbl_tt, bbl_tp = np.zeros((2, nbin, lmax-1)) # bbl starts at l = 2 
         #bbl_pp         = np.zeros((3*nbin, 3*(lmax-1)))
-        bbl_size       = mcm_tt.shape[0]
-        l_bbl          = np.arange(bbl_size) + 2 # starts from l=2
-        #bbl_size       = len(l_bbl)
-        guass_mat      = np.zeros(bbl_size, bbl_size)
-        #guass_mat_pp   = np.zeros(3*bbl_size, bbl_size) 
-        bbl_tt         = np.zeros((nbin, bbl_size))
 
-
+        # compute the average l seperation in a patch. 
         modlmap1d = np.ravel(modlmap) 
         sigma     = np.mean(modlmap1d[1:]-modlmap1d[:-1])
         del modlmap1d
 
         # build I(l,l') 
         for l_cur in l_bbl:
-            l_idx = l_cur - 2 # currection for zero indexing
-            guass_mat[l_idx,:] = (-(l_bbl - l_cur)**2./(2.*sigma)**2.)
-            gauss_mat[l_idx,:] /= np.mean(guass_mat[l_idx,:])
-
-        #gauss_mat_pp[:bbl_size,:] = gauss_mat_pp[bbl_size:2*bbl_size,:] \
-        #        = gauss_mat_pp[2*bbl_size:3*bbl_size,:] = guass_mat[:,:]
+            l_idx              = l_cur - 2 # currection for zero indexing
+            gauss_mat[l_idx,:] = np.exp(-(l_bbl - l_cur)**2./(2.*sigma)**2.)
+            gauss_mat[l_idx,:] /= np.sum(gauss_mat[l_idx,:])
         
-        bbl_tt_raw = np.dot(mcm_tt, guass_mat)
-        del gauss_mat#, guass_mat_pp
-    
+        bbl_tt_raw = np.dot(mcm_tt, gauss_mat)
+        del gauss_mat
+
         # start binning
         for l_cur in l_bbl:
-            l_idx = l_cur - 2
-            _, bbl_tt[:,l_idx] = binner.binned(bbl_tt_raw[:,l_idx])
-        
+            l_idx              = l_cur - 2 # currection for zero indexing
+            _, bbl_tt[:,l_idx] = binner.binned(l_bbl, bbl_tt_raw[:,l_idx])
+     
         del bbl_tt_raw
         return bbl_tt
 
+    bbl_tt = generate_bbl(mcm_tt, mcm_tp, mcm_pp_diag, mcm_pp_offdiag, lmax, bin_sizes)
     bbl_tt = np.dot(np.linalg.inv(mbb_tt), bbl_tt)
 
     
-    def save_matrix(key, mbb):
-        file_name = 'curved_full_%s.dat' %key
-        file_name = os.path.join(mcm_dir, file_name)
-        np.savetxt(file_name, mbb)
+    del mcm_tt, mcm_tp, mcm_pp_diag, mcm_pp_offdiag
 
     save_matrix("TT", mbb_tt); save_matrix("TP", mbb_tp); save_matrix("PP", mbb_pp)
     save_matrix("TT_inv", np.linalg.inv(mbb_tt)) 
