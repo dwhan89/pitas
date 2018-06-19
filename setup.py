@@ -18,7 +18,6 @@ config = {
         'numpy',
         'matplotlib',
         'enlib',
-        'sympy >= 1.0'
         ],
     'packages': [
         'cusps',

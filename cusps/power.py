@@ -53,22 +53,22 @@ class CUSPS(object):
 
         lbin, clbin = (None, None)
         if polcomb in ['SS', 'TT', 'KK', 'QQ', 'UU']:
-            lbin, clbin = get_power_scalarXscalar(emap1, emap2)
-        elif polcom in ['TP', 'ET', 'BT']:
-            lbin, clbin = get_power_scalarXvector(emap1, emap2)
-        elif polcom in ['EE', 'BB', 'BE']:
+            lbin, clbin = self.get_power_scalarXscalar(emap1, emap2)
+        elif polcomb in ['PT', 'ET', 'BT']:
+            lbin, clbin = self.get_power_scalarXvector(emap1, emap2)
+        elif polcomb in ['EE', 'BB', 'BE']:
             # vector x vector
             if pure_eb:
                 warning.warn('[CUSPS/POWER] map1 should be emap, map2 should be bmap')
                 idx2pp = {'EE': 1, 'EB': 2, 'BB': 3}
-                ret    = get_power_pureeb(emap1, emap2)
+                ret    = self.get_power_pureeb(emap1, emap2)
                 lbin   = ret[0]
                 clbin  = ret[idx2pp[polcomb]]
             else:
-                lbin, clbin = get_power_scalarXscalar(emap1, emap2)
+                lbin, clbin = self.get_power_scalarXscalar(emap1, emap2)
         else:
             warning.warn('[CUSPS/POWER] polcomb is not specified. assume scalar x scalar]')
-            lbin, clbin = get_power_scalarXscalar(emap1, emap2)
+            lbin, clbin = self.get_power_scalarXscalar(emap1, emap2)
            
         return lbin, clbin 
 
