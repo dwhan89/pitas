@@ -27,6 +27,10 @@ def check_None(*args):
         assert(arg is not None)
     return True
 
+def cl2dl(l, cl):
+    return cl*(l*(l+1.))/(2*np.pi)
+
+
 ############# maps #################
 def qu2eb(qmap, umap, iau=True, copy=True, nthread=0):
     nshape      = (2,) + qmap.shape
