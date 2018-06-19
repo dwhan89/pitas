@@ -13,15 +13,11 @@ class CUSPS(object):
         self.window_temp   = window_temp
         self.window_pol    = window_pol
 
-        lmax               = int(np.max(bin_edges) if lmax is None else lmax) 
-        self.lmax          = lmax
-
-        # binner set-up 
-        bin_edges       = bin_edges.astype(np.int)
-        if bin_edges[0] < 2: bin_edges[0] = 2
-        self.bin_edges  = bin_edges[np.where(bin_edges <= lmax)]
-        self.bin_center = (bin_edges[1:] + bin_edges[:-1])/2.
-        self.binner     = stats.bin1D(bin_edges)
+        binner             = mcm.CUSPS_BINNER(bin_edges, lmax)
+        self.binner        = binner
+        self.lmax          = binner.lmax
+        self.bin_edges     = binner.bin_edges
+        self.bin_center    = binner.bin_center
         
 
         self.transfer      = transfer
@@ -34,7 +30,7 @@ class CUSPS(object):
         self.mcm_pp_inv    = ret[2].copy()
         del ret
 
-        self.bbl           = get_bbl(self.mcm_identifier, self.window_temp, self.window_pol, self.bin_edges,\
+        self.bbl           = get_bbl(self.mcm_identifier, self.window_temp, self.window_pol, bin_edges,\
                             None, lmax, transfer, False)
 
         mcm_invs           = {} 
@@ -81,7 +77,7 @@ class CUSPS(object):
         # take and bin raw spectra
         assert(polcomb in ['EE', 'EB', 'BB', 'PP'] or pure_eb) # pol part is a bit broken now ...
         l, cl        = get_raw_power(emap1, emap2, lmax=self.lmax, normalize=False)
-        lbin, clbin  = self.binner.binned(l,cl)
+        lbin, clbin  = self.binner.bin(l,cl)
 
         del l, cl
         mcm_inv = self.get_cached_mcm_inv(polcomb, pure_eb)
@@ -91,13 +87,13 @@ class CUSPS(object):
 
     def get_pureeb_power(self, emap, bmap):
         l, clee        = get_raw_power(emap, emap, lmax=self.lmax, normalize=False)
-        lbin, cleebin  = self.binner.binned(l,clee)
+        lbin, cleebin  = self.binner.bin(l,clee)
 
         l, cleb       = get_raw_power(emap, bmap, lmax=self.lmax, normalize=False)
-        lbin, clebbin  = self.binner.binned(l,cleb)
+        lbin, clebbin  = self.binner.bin(l,cleb)
 
         l, clbb        = get_raw_power(bmap, bmap, lmax=self.lmax, normalize=False)
-        lbin, clbbbin  = self.binner.binned(l,clbb)
+        lbin, clbbbin  = self.binner.bin(l,clbb)
 
         clpol   = np.concatenate([cleebin, clebbin, clbbbin])
         mcm_inv = self.get_cached_mcm_inv(polcomb='PP', pure_eb=True)
@@ -162,7 +158,7 @@ def get_bbl(mcm_identifier, window_temp=None, window_pol=None, bin_edges=None, o
     if mcm_identifier is not None: mcm_dir = os.path.join(output_dir, mcm_identifier)
     if cusps.mpi.rank == 0: print "[get_bbl] mcm directory: %s" %mcm_dir
 
-    file_name = os.path.join(mcm_dir, 'curved_full_BBLNEW.dat')
+    file_name = os.path.join(mcm_dir, 'curved_full_BBL.dat')
     bbl = None
     try:
         assert(not overwrite) 

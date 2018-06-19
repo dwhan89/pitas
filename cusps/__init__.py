@@ -1,7 +1,6 @@
 import cusps_io
 import config
 import power
-import cusps_math
 import wigner
 import modecoupling
 import mcm_core

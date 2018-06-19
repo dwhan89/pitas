@@ -3,7 +3,6 @@ from enlib import enmap,curvedsky
 from cusps.util import get_spectra
 from cusps.mcm_core import mcm_core
 import cusps, numpy as np, os 
-from orphics import stats
 
 def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, transfer=None):
     # expect enmap
@@ -12,19 +11,12 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
     cusps.cusps_io.create_dir(mcm_dir)
 
     modlmap   = window_temp.modlmap()
-    lmax      = int(np.max(bin_edges) if lmax is None else lmax)
-    assert(lmax >= 0.)
-
-    # make sure that bin is edges are interger
-    bin_edges = bin_edges.astype(np.int)
-    if bin_edges[0] < 2: bin_edges[0] = 2
-    bin_edges = bin_edges[np.where(bin_edges <= lmax)] 
-    bin_sizes = bin_edges[1:] - bin_edges[:-1]
-    assert((bin_sizes > 0).all())
-    binner    = stats.bin1D(bin_edges)
-
-    nbin      = len(bin_edges) - 1
-    assert(nbin > 0)
+    binner    = CUSPS_BINNER(bin_edges, lmax)
+    lmax      = binner.lmax
+    bin_sizes = binner.bin_sizes   
+    nbin      = binner.nbin    
+    bin_lower = binner.bin_lower
+    bin_upper = binner.bin_upper
 
     def process_spectrum(window1, window2=None, lmax=lmax):
         l, cl = get_spectra(window1, window2, lmax=lmax)
@@ -57,7 +49,6 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
 
     # bin mcm
     def bin_mcm(mcm_full, mcm_binned):
-        bin_lower, bin_upper = bin_edges[:-1], bin_edges[1:]
         mcm_core.bin_mcm(mcm_full.T, bin_lower, bin_upper, bin_sizes.T, mcm_binned.T)
 
     bin_mcm(mcm_tt, mbb_tt); bin_mcm(mcm_tp, mbb_tp)
@@ -66,7 +57,7 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
 
     # implement binning
     #test binning matrix
-    mcm_core.binning_matrix(mcm_tt.T,bin_edges[:-1],bin_edges[1:],bin_sizes, bbl.T)
+    mcm_core.binning_matrix(mcm_tt.T,bin_lower,bin_upper,bin_sizes, bbl.T)
     bbl = np.dot(np.linalg.inv(mbb_tt),bbl)
     # clean up
 
@@ -118,7 +109,7 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
         # start binning
         for l_cur in l_bbl:
             l_idx              = l_cur - 2 # currection for zero indexing
-            _, bbl_tt[:,l_idx] = binner.binned(l_bbl, bbl_tt_raw[:,l_idx])
+            _, bbl_tt[:,l_idx] = binner.bin(l_bbl, bbl_tt_raw[:,l_idx])
      
         del bbl_tt_raw
         return bbl_tt
@@ -135,3 +126,58 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
     save_matrix("PP_inv", np.linalg.inv(mbb_pp))
     save_matrix("BBL", bbl) 
     save_matrix("BBLNEW", bbl_tt)
+
+class CUSPS_BINNER(object):
+    def __init__(self, bin_edges, lmax=None): 
+
+        lmax      = int(np.max(bin_edges) if lmax is None else lmax)
+        assert(lmax >= 0.)
+        
+        bin_edges    = bin_edges.astype(np.int)
+        bin_edges[0] = 2
+
+        bin_lower      = bin_edges[:-1].copy()
+        bin_lower[1:] += 1
+        bin_upper      = bin_edges[1:].copy()
+        
+        bin_upper = bin_upper[np.where(bin_upper <= lmax)]
+        bin_lower = bin_lower[:len(bin_upper)]
+        bin_lower = bin_lower[np.where(bin_lower <= lmax)]
+
+        self.lmax       = lmax
+        self.bin_edges  = bin_edges
+        self.bin_lower  = bin_lower
+        self.bin_upper  = bin_upper
+        self.bin_center = (bin_lower + bin_upper)/2.
+        self.bin_sizes  = bin_upper - bin_lower + 1
+        self.nbin       = len(bin_lower)
+
+        assert((self.bin_sizes > 0)).all()
+
+
+    def bin(self, l, cl):
+        lbin  = self.bin_center
+        clbin = np.zeros(self.nbin)
+        for idx in range(0, self.nbin):
+            low_lim , upp_lim = (self.bin_lower[idx], self.bin_upper[idx])
+            
+            loc   = np.where((l >= low_lim) & (l <= upp_lim))
+            clbin[idx] = cl[loc].mean()
+
+        return (lbin, clbin)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
