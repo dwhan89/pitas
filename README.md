@@ -2,7 +2,7 @@
 **CU**rved **S**ky **P**ower **S**pectra
 
 ------
-I bulit a wrapper around Thibaut's curved sky mode coupling routine, so that it can seamlessly integrate with existing ACT analysis pipelines. 
+This code is a wrapper around Thibaut's curved sky mode coupling routine, so that it can seamlessly integrate with existing ACT analysis pipelines. 
 
 ------
 
