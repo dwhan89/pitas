@@ -1,6 +1,7 @@
 # CUSPS
 **CU**rved **S**ky **P**ower **S**pectra
 
-This is a wrapper around Thibaut's curved sky mode coupling code, with few tweakes I introduced in order to easily integrate it with ACT FALCON software.
+------
+The core of this module is Thibaut's curved sky mode coupling routine. I made a few modification along the way, so that it can seamlessly integrate with existing ACT analysis pipelines. 
 
 ------
