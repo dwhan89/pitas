@@ -18,17 +18,16 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
     bin_lower = binner.bin_lower
     bin_upper = binner.bin_upper
 
-    def process_spectrum(window1, window2=None, lmax=lmax):
+    def get_windowspec(window1, window2=None, lmax=lmax):
         l, cl = get_spectra(window1, window2, lmax=lmax)
         cl    *= (2.*l+1.)
         return l, cl
     
+    l, cl_temp   = get_windowspec(window_temp, lmax=lmax)
+    l, cl_cross  = get_windowspec(window_temp, window_pol, lmax=lmax)
+    l, cl_pol    = get_windowspec(window_pol, lmax=lmax)
 
-    l, cl_temp   = process_spectrum(window_temp, lmax=lmax)
-    l, cl_cross  = process_spectrum(window_temp, window_pol, lmax=lmax)
-    l, cl_pol    = process_spectrum(window_pol, lmax=lmax)
-
-
+    # load transfer function
     f_tran = None
     if transfer is not None:
         l_tran, f_tran = transfer
@@ -36,7 +35,6 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
         transfer       = f_tran **2.
     else: 
         transfer       = np.ones(len(l))
-        #f_tran = np.ones(len(l))
         
 
     # full sized mcm matrices
@@ -54,13 +52,11 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
     bin_mcm(mcm_tt, mbb_tt); bin_mcm(mcm_tp, mbb_tp)
     bin_mcm(mcm_pp_diag, mbb_pp_diag); bin_mcm(mcm_pp_offdiag, mbb_pp_offdiag)
 
-
-    # implement binning
-    #test binning matrix
+    # calc bbl matrix
     mcm_core.binning_matrix(mcm_tt.T,bin_lower,bin_upper,bin_sizes, bbl.T)
     bbl = np.dot(np.linalg.inv(mbb_tt),bbl)
-    # clean up
 
+    del mcm_tt, mcm_tp, mcm_pp_diag, mcm_pp_offdiag
 
     # combine pol data
     def assamble_mat_pp(mat_pp_diag, mat_pp_offdiag):
@@ -73,59 +69,17 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
         return mat_pp
 
     mbb_pp = assamble_mat_pp(mbb_pp_diag, mbb_pp_offdiag)
-
  
     def save_matrix(key, mbb):
         file_name = 'curved_full_%s.dat' %key
         file_name = os.path.join(mcm_dir, file_name)
         np.savetxt(file_name, mbb)
 
-    def generate_bbl(mcm_tt, mcm_tp, mcm_pp_diag, mcm_pp_offdiag, lmax, bin_sizes):
-        # For now, I am just computing BBL from TT MCM. 
-        # But, technically, I will need to compute BBL matrix for TP and PP independently
-        
-        nbin            = len(bin_sizes)
-        bbl_size        = mcm_tt.shape[0]
-        l_bbl           = np.arange(bbl_size) + 2 # starts from l=2
-        gauss_mat       = np.zeros((bbl_size, bbl_size))
-        bbl_tt          = np.zeros((nbin, bbl_size)) 
-        #bbl_tt, bbl_tp = np.zeros((2, nbin, lmax-1)) # bbl starts at l = 2 
-        #bbl_pp         = np.zeros((3*nbin, 3*(lmax-1)))
-
-        # compute the average l seperation in a patch. 
-        modlmap1d = np.ravel(modlmap) 
-        sigma     = np.mean(modlmap1d[1:]-modlmap1d[:-1])
-        del modlmap1d
-
-        # build I(l,l') 
-        for l_cur in l_bbl:
-            l_idx              = l_cur - 2 # currection for zero indexing
-            gauss_mat[l_idx,:] = np.exp(-(l_bbl - l_cur)**2./(2.*sigma)**2.)
-            gauss_mat[l_idx,:] /= np.sum(gauss_mat[l_idx,:])
-        
-        bbl_tt_raw = np.dot(mcm_tt, gauss_mat)
-        del gauss_mat
-
-        # start binning
-        for l_cur in l_bbl:
-            l_idx              = l_cur - 2 # currection for zero indexing
-            _, bbl_tt[:,l_idx] = binner.bin(l_bbl, bbl_tt_raw[:,l_idx])
-     
-        del bbl_tt_raw
-        return bbl_tt
-
-    bbl_tt = generate_bbl(mcm_tt, mcm_tp, mcm_pp_diag, mcm_pp_offdiag, lmax, bin_sizes)
-    bbl_tt = np.dot(np.linalg.inv(mbb_tt), bbl_tt)
-
-    
-    del mcm_tt, mcm_tp, mcm_pp_diag, mcm_pp_offdiag
-
     save_matrix("TT", mbb_tt); save_matrix("TP", mbb_tp); save_matrix("PP", mbb_pp)
     save_matrix("TT_inv", np.linalg.inv(mbb_tt)) 
     save_matrix("TP_inv", np.linalg.inv(mbb_tp))
     save_matrix("PP_inv", np.linalg.inv(mbb_pp))
     save_matrix("BBL", bbl) 
-    save_matrix("BBLNEW", bbl_tt)
 
 class CUSPS_BINNER(object):
     def __init__(self, bin_edges, lmax=None): 

@@ -38,9 +38,9 @@ assert(end >= start)
 subtasks = cmblens.mpi.taskrange(imin=start, imax=end)
 
 # directory setup
-postfix     = 'new_cusps'
+postfix     = '061918'
 output_dir  = os.path.join('/global/homes/d/dwhan89/shared/outbox/cori/test_cusps', postfix)
-cmb_dir     = '/global/cscratch1/sd/engelen/simsS1516_v0.2/data/'
+cmb_dir     = '/global/cscratch1/sd/engelen/simsS1516_v0.3/data/'
 output_path = lambda x: os.path.join(output_dir, x)
 
 if cmblens.mpi.rank == 0:
@@ -51,20 +51,15 @@ cmblens.mpi.barrier()
 
 # load theory
 lmax = 6000
-#l_th = np.arange(lmax)
 theo = cmblens.theory.load_theory_cls('cosmo2017_10K_acc3_unlensed_cmb', unit='camb', l_interp=None)
 l_th = theo['l']
 
 # miscs 
-deg      = 15
-coords   = np.array([[-deg/2.,-deg/2.],[deg/2.,deg/2.]])
-proj     = 'car'
-polcombs = ['tt','ee','bb','te', 'pp']
-
-
-
-bin_edges     = np.linspace(0, lmax, 60)
-quick_binner  = stats.bin1D(bin_edges)
+deg       = 15
+coords    = np.array([[-deg/2.,-deg/2.],[deg/2.,deg/2.]])
+proj      = 'car'
+polcombs  = ['tt','ee','bb','te', 'pp']
+bin_edges = np.linspace(0, lmax, 60)
 
 def get_sim(sim_idx):
     ret = act_sim.getActpolCmbSim(None, coords, sim_idx, cmb_dir, doBeam=False, pixelFac= 2)
@@ -80,11 +75,21 @@ taper, _        = maps.get_taper(shape)
 taper           = enmap.enmap(taper, wcs=wcs)
 
 # initialize cusps
-overwrite = False
+overwrite      = False
 mcm_identifier = "%lsd_le%d_nb%d_lm%d_a%d_%s" %(0, lmax, 60, lmax, deg**2, postfix)
-cusps_fc = cusps.power.CUSPS(mcm_identifier, taper, taper, bin_edges, lmax, None, overwrite)
-binner   = cusps_fc.binner
+cusps_fc       = cusps.power.CUSPS(mcm_identifier, taper, taper, bin_edges, lmax, None, overwrite)
+binner         = cusps_fc.binner
 
+
+# bin the theory
+theo_bin = {}
+for key in theo.keys():
+    if key == 'l': continue
+    lbin_th, clbin_th = cusps_fc.bin_theory(l_th, theo[key]) 
+    theo_bin['l']     = lbin_th
+    theo_bin[key]     = clbin_th
+
+# helper function
 def qu2eb(qmap, umap):
     import polTools
 
@@ -97,20 +102,12 @@ def qu2eb(qmap, umap):
 
     return (emap, bmap)
 
-# bin the theory
-theo_bin = {}
-for key in theo.keys():
-    if key == 'l': continue
-    #lbin_th, clbin_th = binner.binned(l_th, theo[key])
-    lbin_th, clbin_th = cusps_fc.bin_theory(l_th, theo[key]) 
-    theo_bin['l']     = lbin_th
-    theo_bin[key]     = clbin_th
-
 plot_only       = False
-stat_override    = False
+stat_override   = False
 lbin            = cusps_fc.bin_center
 stat_identifier = mcm_identifier + 'cusps_ps'
 st = cmblens.stats.STATS(stat_identifier=stat_identifier, overwrite=stat_override)
+
 for sim_idx in subtasks:
     log.info("processing %d" %sim_idx)
     if plot_only: continue
@@ -122,8 +119,6 @@ for sim_idx in subtasks:
     tmap *= taper
     qmap *= taper
     umap *= taper
-
-
 
     emap, bmap = qu2eb(qmap, umap)
 
@@ -144,7 +139,7 @@ for sim_idx in subtasks:
         emap2 = cmb_dict[polcomb[1]] 
         log.info('[add_spectra]: ' +  polcomb)
         l, cl       = cusps_fc.get_power(emap1, emap2=emap2, polcomb=polcomb.upper())
-        lbin, clbin = binner.binned(l,cl)
+        lbin, clbin = binner.bin(l,cl)
         st.add_data('dl%s_deconv'%polcomb, sim_idx, cl2dl(lbin, clbin))
 
         theo_idx  = 'cl%s'% polcomb
@@ -156,7 +151,7 @@ for sim_idx in subtasks:
         if st.has_data('fracbb_deconv', sim_idx): continue
         log.info('[add_spectra]:' + ' pp')
         
-        lbin, clee, cleb, clbb = cusps_fc.get_pureeb_power(emap, bmap) 
+        lbin, clee, cleb, clbb = cusps_fc.get_power_pureeb(emap, bmap) 
         st.add_data('dlee_deconv', sim_idx, cl2dl(lbin, clee))
         st.add_data('dleb_deconv', sim_idx, cl2dl(lbin, cleb))
         st.add_data('dlbb_deconv', sim_idx, cl2dl(lbin, clbb))
