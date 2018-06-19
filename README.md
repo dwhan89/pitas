@@ -10,9 +10,9 @@ The core of this module is Thibaut's curved sky mode coupling routine. I made a 
 
 ### Core dependencies
 1. **libsharp** (https://github.com/Libsharp/libsharp)
-..* used for Spherical Harmronic Transform (SHT)
+* used for Spherical Harmronic Transform (SHT)
 2. **enlib** (https://github.com/amaurea/enlib)
-..* In particular, CUSPS requires curvedsky module, which is a wrapper around libsharp.
+* In particular, CUSPS requires curvedsky module, which is a wrapper around libsharp.
 3. your favorite FORTRAN compiler to compile CUSPS!
 
 ### Installation steps
