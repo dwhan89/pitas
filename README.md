@@ -2,7 +2,7 @@
 **P**ower-spectrum **I**n **T**racts **A**lgorithm on the **S**phere
 
 ------
-PITAS is an agile routine to compute power spectra of curved-sky in cylidrical projection (CAR, CEA). The core of the routine is the *MASTER* algorithm implemented by Thibaut Louis. It implements *PURE-EB* to compute unbiased CMB polarization spectra. DRC3JJ routine is packaged together to compute Wigner 3j symbol.  
+PITAS is an agile routine to compute power spectra of curved-sky in cylidrical projection (CAR, CEA). The core of the routine is the *MASTER* algorithm implemented by Thibaut Louis. It contains an implementation of *PURE-EB* to compute unbiased CMB polarization spectra. DRC3JJ routine is packaged together to compute Wigner 3j symbol.  
 
 ------
 
