@@ -32,24 +32,16 @@ def cl2dl(l, cl):
 
 
 ############# maps #################
-def qu2eb(qmap, umap, iau=True, copy=True, nthread=0):
-    nshape      = (2,) + qmap.shape
-    wcs         = qmap.wcs
-    temp        = enmap.empty(nshape, wcs)
-       
-    temp[0,:,:] = qmap.copy() if copy else qmap
-    temp[1,:,:] = umap.copy() if copy else umap
+def tqu2teb(tmap, qmap, umap, lmax):
+    tqu     = np.zeros((3,)+tmap.shape)
+    tqu[0], tqu[1], tqu[2] = (tmap, qmap, umap)
+    tqu     = enmap.enmap(tqu, tmap.wcs)
+    alm     = curvedsky.map2alm(tqu, lmax=lmax)
 
+    teb     = curvedsky.alm2map(alm[:,None], tqu.copy()[:,None], spin=0)[:,0]
+    del tqu
 
-    temp = enmap.samewcs(enmap.fft(temp,nthread=nthread,normalize=True), temp)
-    rot  = enmap.queb_rotmat(enmap.lmap(nshape,wcs),iau=iau)
-    temp = enmap.map_mul(rot, temp)
-    temp = enmap.ifft(temp, nthread=nthread).real
-
-    emap, bmap = temp[0,:,:], temp[1,:,:]
-    
-    return (emap, bmap)
-
+    return (teb[0], teb[1], teb[2]) #tmap, emap, bmap
 
 ############# misc #################
 
@@ -109,5 +101,18 @@ def merge_dict(a, b, path=None, clean = True):
     if clean: del b
 
     return a
+
+def get_default_bin_edges(lmax):
+    bin_edges = None
+    if lmax <= 400:
+        bin_edges = np.linspace(0,400,20)
+    else:
+        bin_num   = (lmax-400)/100
+        if bin_num == 0: bin_num = 1
+        bin_edges = np.concatenate((np.linspace(0,400,20), np.linspace(400, lmax, bin_num)))
+        bin_edges = np.unique(bin_edges)
+    return bin_edges
+
+
 
 
