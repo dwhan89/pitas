@@ -29,6 +29,6 @@ PITAS is an agile routine to compute power spectrum of curved-sky in cylidrical 
 
 ------
 ## Misc/Note
-For a trial run, please take a look at ```test/script/simple_test.py```.
+For a trial run, please take a look at ```test/simple_test.py```.
 
 
