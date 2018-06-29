@@ -2,7 +2,7 @@
 **CU**rved **S**ky **P**ower **S**pectra
 
 ------
-I bulit a wrapper around Thibaut's curved sky mode coupling routine, so that it can seamlessly integrate with existing ACT analysis pipelines. 
+This code is a wrapper around Thibaut's curved sky mode coupling routine, so that it can seamlessly integrate with existing ACT analysis pipelines. 
 
 ------
 
@@ -12,7 +12,7 @@ I bulit a wrapper around Thibaut's curved sky mode coupling routine, so that it 
 1. **libsharp** (https://github.com/Libsharp/libsharp)
 * used for Spherical Harmronic Transform (SHT)
 2. **enlib** (https://github.com/amaurea/enlib)
-* In particular, CUSPS requires curvedsky module, which is a wrapper around libsharp.
+* In particular, CUSPS requires curvedsky module.
 3. your favorite FORTRAN compiler to compile CUSPS!
 
 ### Installation steps
@@ -27,6 +27,6 @@ I bulit a wrapper around Thibaut's curved sky mode coupling routine, so that it 
 
 ------
 ## Misc/Note
-Unfortunately, there is no simple example script yet. I will work on it. Meanwhile, you can take a look under ```test/scripts``` for guidance. 
+For a trial run, please take a look at ```test/script/simple_test.py```.
 
 
