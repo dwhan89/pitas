@@ -4,7 +4,7 @@
 **"Best Unbiased Pita on the Sphere™"** 
 
 ------
-PITAS is an agile routine to compute power spectra of curved-sky in cylidrical projection (CAR, CEA). The core of the routine is the *MASTER* algorithm implemented by Thibaut Louis. And it contains an implementation of *PURE-EB* to compute unbiased CMB polarization spectra. As a part of package, it contains DR3JJ routine to compute Wigner 3j symbols.   
+PITAS is an agile routine to compute power spectrum of curved-sky in cylidrical projection (CAR, CEA). The core of the routine is the *MASTER* algorithm implemented by Thibaut Louis. And it contains an implementation of *PURE-EB* to compute unbiased CMB polarization spectra. As a part of package, it contains DR3JJ routine to compute Wigner 3j symbols.   
 
 ------
 
@@ -14,17 +14,17 @@ PITAS is an agile routine to compute power spectra of curved-sky in cylidrical p
 1. **libsharp** (https://github.com/Libsharp/libsharp)
 * used for Spherical Harmronic Transform (SHT)
 2. **enlib** (https://github.com/amaurea/enlib)
-* In particular, CUSPS requires curvedsky module.
-3. your favorite FORTRAN compiler to compile CUSPS!
+* In particular, PITAS requires curvedsky module.
+3. your favorite FORTRAN compiler to compile PITAS!
 
 ### Installation steps
 ```
-  cd <path to cusps>/cusps
-  export CUSPS_COMP=<Compiler File> ! ex) export CUSPS_COMP=nersc_cori
-                                    ! Check cusps/compile_opts for all options
+  cd <path to pitas>/pitas
+  export PITAS_COMP=<Compiler File> ! ex) export PITAS_COMP=nersc_cori
+                                    ! Check pitas/compile_opts for all options
   make
   cd ..
-  pip install -e . --user 
+  pip install -e . --user           ! install python module 
 ```
 
 ------
