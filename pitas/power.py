@@ -8,13 +8,13 @@ import os, numpy as np
 from orphics import stats
 import warnings
 
-class CUSPS(object):
+class PITAS(object):
     def __init__(self, mcm_identifier, window_scalar, window_pol, bin_edges, lmax=None, transfer=None, overwrite=False):
         self.mcm_identifier = mcm_identifier
         self.window_scalar    = window_scalar
         self.window_pol     = window_pol
 
-        binner              = mcm.CUSPS_BINNER(bin_edges, lmax)
+        binner              = mcm.PITAS_BINNER(bin_edges, lmax)
         self.binner         = binner
         self.lmax           = binner.lmax
         self.bin_edges      = binner.bin_edges
@@ -82,7 +82,7 @@ class CUSPS(object):
         elif polcomb in ['EE', 'BB', 'BE']:
             # vector x vector
             if pure_eb:
-                warning.warn('[CUSPS/POWER] map1 should be emap, map2 should be bmap')
+                warning.warn('[PITAS/POWER] map1 should be emap, map2 should be bmap')
                 idx2pp = {'EE': 1, 'EB': 2, 'BB': 3}
                 ret    = self.get_power_pureeb(emap1, emap2)
                 lbin   = ret[0]
@@ -90,7 +90,7 @@ class CUSPS(object):
             else:
                 lbin, clbin = self.get_power_scalarXscalar(emap1, emap2)
         else:
-            warning.warn('[CUSPS/POWER] polcomb is not specified. assume scalar x scalar]')
+            warning.warn('[PITAS/POWER] polcomb is not specified. assume scalar x scalar]')
             lbin, clbin = self.get_power_scalarXscalar(emap1, emap2)
            
         return lbin, clbin 

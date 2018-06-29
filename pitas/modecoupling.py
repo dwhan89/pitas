@@ -11,7 +11,7 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
     pitas.pitas_io.create_dir(mcm_dir)
 
     modlmap   = window_temp.modlmap()
-    binner    = CUSPS_BINNER(bin_edges, lmax)
+    binner    = PITAS_BINNER(bin_edges, lmax)
     lmax      = binner.lmax
     bin_sizes = binner.bin_sizes   
     nbin      = binner.nbin    
@@ -95,7 +95,7 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
     save_matrix("BBL_TP", bbl_tp) 
     save_matrix("BBL_PP", bbl_pp) 
 
-class CUSPS_BINNER(object):
+class PITAS_BINNER(object):
     def __init__(self, bin_edges, lmax=None): 
 
         lmax      = int(np.max(bin_edges) if lmax is None else lmax)

@@ -1,4 +1,4 @@
-include ../compile_opts/$(CUSPS_COMP).mk
+include ../compile_opts/$(PITAS_COMP).mk
 
 all: wigner3j_sub.so
 
