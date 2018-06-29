@@ -22,6 +22,11 @@ cmblens.config.argparser.add_argument('-mp', '--mpi',
                 default='t',
                 help='switch for mpi')
 
+cmblens.config.argparser.add_argument('-c', '--coords',
+                default='[[-6.,-25.],[6.,25.]]')
+
+cmblens.config.argparser.add_argument('-dec', '--declination',
+                default='0.0', type=float)
 
 args = cmblens.config.argparser.parse_args()
 
@@ -38,7 +43,7 @@ assert(end >= start)
 subtasks = cmblens.mpi.taskrange(imin=start, imax=end)
 
 # directory setup
-postfix     = '061918'
+postfix     = '062218_lmax_8000'
 output_dir  = os.path.join('/global/homes/d/dwhan89/shared/outbox/cori/test_cusps', postfix)
 cmb_dir     = '/global/cscratch1/sd/engelen/simsS1516_v0.3/data/'
 output_path = lambda x: os.path.join(output_dir, x)
@@ -50,16 +55,18 @@ cmblens.mpi.barrier()
 
 
 # load theory
-lmax = 6000
+lmax = 8000
 theo = cmblens.theory.load_theory_cls('cosmo2017_10K_acc3_unlensed_cmb', unit='camb', l_interp=None)
 l_th = theo['l']
 
 # miscs 
-deg       = 15
-coords    = np.array([[-deg/2.,-deg/2.],[deg/2.,deg/2.]])
+coords       = np.array(eval(args.coords))
+coords[:,0] += args.declination 
+coords_str   = str(coords).replace('\n', '').replace(' ', '')
+
 proj      = 'car'
 polcombs  = ['tt','ee','bb','te', 'pp']
-bin_edges = np.linspace(0, lmax, 60)
+bin_edges = np.linspace(0, lmax, 80)
 
 def get_sim(sim_idx):
     ret = act_sim.getActpolCmbSim(None, coords, sim_idx, cmb_dir, doBeam=False, pixelFac= 2)
@@ -76,7 +83,7 @@ taper           = enmap.enmap(taper, wcs=wcs)
 
 # initialize cusps
 overwrite      = False
-mcm_identifier = "%lsd_le%d_nb%d_lm%d_a%d_%s" %(0, lmax, 60, lmax, deg**2, postfix)
+mcm_identifier = "%lsd_le%d_nb%d_lm%d_%s_%s" %(0, lmax, 60, lmax, coords_str, postfix)
 cusps_fc       = cusps.power.CUSPS(mcm_identifier, taper, taper, bin_edges, lmax, None, overwrite)
 binner         = cusps_fc.binner
 
@@ -90,17 +97,16 @@ for key in theo.keys():
     theo_bin[key]     = clbin_th
 
 # helper function
-def qu2eb(qmap, umap):
-    import polTools
+def tqu2teb(tmap, qmap, umap):
+    tqu     = np.zeros((3,)+tmap.shape)
+    tqu[0], tqu[1], tqu[2] = (tmap, qmap, umap)
+    tqu     = enmap.enmap(tqu, tmap.wcs)
+    alm     = curvedsky.map2alm(tqu, lmax=lmax)
 
-    qtemp = qmap.to_flipper()
-    utemp = umap.to_flipper()
-    emap, bmap = polTools.convertToEB(qtemp, utemp, True, False) 
+    teb     = curvedsky.alm2map(alm[:,None], tqu.copy()[:,None], spin=0)[:,0]
+    del tqu
 
-    emap = enmap.from_flipper(emap)
-    bmap = enmap.from_flipper(bmap)
-
-    return (emap, bmap)
+    return (teb[0], teb[1], teb[2])
 
 plot_only       = False
 stat_override   = False
@@ -110,25 +116,25 @@ st = cmblens.stats.STATS(stat_identifier=stat_identifier, overwrite=stat_overrid
 
 for sim_idx in subtasks:
     log.info("processing %d" %sim_idx)
-    if plot_only: continue
+    if st.has_data(sim_idx, 'fracbb_deconv'): continue
     tmap, qmap, umap  = get_sim(sim_idx) 
     tmap -= np.mean(tmap)
     qmap -= np.mean(qmap)
     umap -= np.mean(umap)
-    qmap *= -1. 
     tmap *= taper
     qmap *= taper
     umap *= taper
 
-    emap, bmap = qu2eb(qmap, umap)
+    tmap, emap, bmap = tqu2teb(tmap, qmap, umap)
 
     if sim_idx == 0:
-        io.high_res_plot_img(tmap, output_path('tmap_unlen_%d.png'%sim_idx), down=3)
-        io.high_res_plot_img(qmap, output_path('qmap_unlen_%d.png'%sim_idx), down=3)
-        io.high_res_plot_img(umap, output_path('umap_unlen_%d.png'%sim_idx), down=3)
-        io.high_res_plot_img(emap, output_path('emap_unlen_%d.png'%sim_idx), down=3)
-        io.high_res_plot_img(bmap, output_path('bmap_unlen_%d.png'%sim_idx), down=3)
+        io.high_res_plot_img(tmap, output_path('tmap_unlen_%d_%s.png'%(sim_idx,coords_str)), down=3)
+        io.high_res_plot_img(qmap, output_path('qmap_unlen_%d_%s.png'%(sim_idx,coords_str)), down=3)
+        io.high_res_plot_img(umap, output_path('umap_unlen_%d_%s.png'%(sim_idx,coords_str)), down=3)
+        io.high_res_plot_img(emap, output_path('emap_unlen_%d_%s.png'%(sim_idx,coords_str)), down=3)
+        io.high_res_plot_img(bmap, output_path('bmap_unlen_%d_%s.png'%(sim_idx,coords_str)), down=3)
 
+    if plot_only: continue
     cmb_dict = {'t': tmap, 'e': emap, 'b': bmap}
     
     # take take tt and te spectra
@@ -188,9 +194,9 @@ if cmblens.mpi.rank == 0:
         plotter.set_title('Curved Sky Dl_%s ' %polcomb.upper())
         plotter.set_xlabel(r'$l$') 
         plotter.set_ylabel(r'$Dl(l)$')
-        plotter.set_xlim([0,5000])
+        plotter.set_xlim([0,6000])
         plotter.show_legends()
-        plotter.save(output_path("%s_spec.png"%prefix))
+        plotter.save(output_path("%s_spec_%s.png"%(prefix, coords_str)))
 
    
     for polcomb in polcombs:
@@ -201,9 +207,9 @@ if cmblens.mpi.rank == 0:
         plotter.set_title('Fractional Difference Dl_%s ' %polcomb.upper(), fontsize=22)
         plotter.set_xlabel(r'$l$', fontsize=22) 
         plotter.set_ylabel(r'$(sim - theo)/theo$', fontsize=22)
-        plotter.set_xlim([0,5000])
-        plotter.set_ylim([-0.05,0.05])
+        plotter.set_xlim([0,6000])
+        plotter.set_ylim([-0.02,0.02])
         plotter.hline(y=0, color='k')
         plotter.show_legends(fontsize=18)
-        plotter.save(output_path("frac_diff%s.png"%prefix))
+        plotter.save(output_path("frac_diff%s_%s.png"%(prefix, coords_str)))
 

@@ -19,7 +19,7 @@ class CUSPS(object):
         self.lmax           = binner.lmax
         self.bin_edges      = binner.bin_edges
         self.bin_center     = binner.bin_center
-        
+        self.nbin           = len(self.bin_center)        
 
         self.transfer       = transfer
         
@@ -31,8 +31,13 @@ class CUSPS(object):
         self.mcm_pp_inv     = ret[2].copy()
         del ret
 
-        self.bbl            = get_bbl(self.mcm_identifier, self.window_scalar, self.window_pol, bin_edges,\
+        ret                 = get_bbl(self.mcm_identifier, self.window_scalar, self.window_pol, bin_edges,\
                              None, lmax, transfer, False)
+
+        self.bbl_tt         = ret[0].copy()
+        self.bbl_tp         = ret[1].copy()
+        self.bbl_pp         = ret[2].copy()
+        del ret
 
         mcm_invs            = {} 
         mcm_invs[0]         = self.mcm_tt_inv
@@ -40,12 +45,30 @@ class CUSPS(object):
         mcm_invs[2]         = self.mcm_pp_inv
 
         self.mcm_invs       = mcm_invs
-    
-    def bin_theory(self, l_th, cl_th):
+
+    def bin_theory_scalarxscalar(self, l_th, cl_th):
         assert(l_th[0] == 2)
-        clbin_th = np.dot(self.bbl, cl_th[:self.lmax])
+        clbin_th = np.dot(self.bbl_tt, cl_th[:self.lmax])
 
         return (self.bin_center.copy(), clbin_th)
+
+    def bin_theory_scalarxvector(self, l_th, cl_th):
+        assert(l_th[0] == 2)
+        clbin_th = np.dot(self.bbl_tp, cl_th[:self.lmax])
+
+        return (self.bin_center.copy(), clbin_th)
+
+    def bin_theory_pureeb(self, l_th, clee_th, cleb_th, clbb_th):
+        assert(l_th[0] == 2)
+
+        clpp_th  = np.concatenate([clee_th[:self.lmax],cleb_th[:self.lmax],clbb_th[:self.lmax]])
+        clbin_th = np.dot(self.bbl_pp, clpp_th)
+
+        nbin     = self.nbin
+        cleebin_th, clebbin_th, clbbbin_th = (clbin_th[:nbin], clbin_th[nbin:2*nbin], clbin_th[2*nbin:3*nbin])
+
+        return (self.bin_center.copy(), cleebin_th, clebbin_th, clbbbin_th) 
+
 
     def get_power(self, emap1, emap2=None, polcomb='SS', pure_eb=True):
         # take and bin raw spectra
@@ -107,7 +130,7 @@ class CUSPS(object):
         mcm_inv = self.mcm_invs[2]
         del l, clee, cleb, clbb, cleebin, clebbin, clbbbin
 
-        nbin    = len(lbin)
+        nbin    = self.nbin
         clpol   = np.dot(mcm_inv, clpol)
         
         clee, cleb, clbb = (clpol[:nbin], clpol[nbin:2*nbin], clpol[2*nbin:3*nbin])
@@ -119,12 +142,19 @@ def get_bbl(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=None,
     if mcm_identifier is not None: mcm_dir = os.path.join(output_dir, mcm_identifier)
     if cusps.mpi.rank == 0: print "[get_bbl] mcm directory: %s" %mcm_dir
 
-    file_name = os.path.join(mcm_dir, 'curved_full_BBL.dat')
-    bbl = None
+    bbl_tt, bbl_tp, bbl_pp = (None, None, None)
+    def load_bbl(key):
+        file_name = 'curved_full_BBL_%s.dat' %key
+        file_name = os.path.join(mcm_dir, file_name)
+        
+        print "trying to load %s" %file_name
+        return np.loadtxt(file_name)
+
     try:
         assert(not overwrite) 
-        print "trying to load %s" %file_name
-        bbl = np.loadtxt(file_name)
+        bbl_tt = load_bbl('TT') 
+        bbl_tp = load_bbl('TP')
+        bbl_pp = load_bbl('PP')
     except:
         if cusps.mpi.rank == 0: 
             print "failed to load mcm. calculating mcm"
@@ -134,15 +164,17 @@ def get_bbl(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=None,
         else: pass
         cusps.mpi.barrier()
 
-        bbl = np.loadtxt(file_name)
-    return bbl
+        bbl_tt = load_bbl('TT') 
+        bbl_tp = load_bbl('TP')
+        bbl_pp = load_bbl('PP')
+    return (bbl_tt, bbl_tp, bbl_pp)
 
 def get_mcm_inv(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=None, output_dir=None, lmax=None, transfer=None, overwrite=False):
     if output_dir is None: output_dir = cusps.config.get_output_dir()
     if mcm_identifier is not None: mcm_dir = os.path.join(output_dir, mcm_identifier)
     if cusps.mpi.rank == 0: print "mcm directory: %s" %mcm_dir
 
-    mbb_tt_inv = mbb_tp_inv = mbb_pp_inv = None
+    mbb_tt_inv, mbb_tp_inv, mbb_pp_inv = (None, None, None)
     def load_mbb_inv(key):
         file_name = 'curved_full_%s.dat' %key
         file_name = os.path.join(mcm_dir, file_name)

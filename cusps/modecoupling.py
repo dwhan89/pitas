@@ -41,7 +41,7 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
     mcm_tt, mcm_tp, mcm_pp_diag, mcm_pp_offdiag = np.zeros((4, lmax, lmax))
     # binned mcm matrices
     mbb_tt, mbb_tp, mbb_pp_diag, mbb_pp_offdiag = np.zeros((4, nbin, nbin))
-    bbl                                         = np.zeros((nbin, lmax))
+    bbl_tt, bbl_tp, bbl_pp_diag, bbl_pp_offdiag = np.zeros((4, nbin, lmax))
 
     mcm_core.calc_mcm(cl_temp, cl_cross, cl_pol, transfer, mcm_tt.T, mcm_tp.T, mcm_pp_diag.T, mcm_pp_offdiag.T)
 
@@ -52,20 +52,14 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
     bin_mcm(mcm_tt, mbb_tt); bin_mcm(mcm_tp, mbb_tp)
     bin_mcm(mcm_pp_diag, mbb_pp_diag); bin_mcm(mcm_pp_offdiag, mbb_pp_offdiag)
 
-    # calc bbl matrix
-    mcm_core.binning_matrix(mcm_tt.T,bin_lower,bin_upper,bin_sizes, bbl.T)
-    bbl = np.dot(np.linalg.inv(mbb_tt),bbl)
-
-    del mcm_tt, mcm_tp, mcm_pp_diag, mcm_pp_offdiag
-
     # combine pol data
     def assamble_mat_pp(mat_pp_diag, mat_pp_offdiag):
-        nbin = mat_pp_diag.shape[0] # pp matrix is always nxn matrix
-        mat_pp = np.zeros((3*nbin, 3*nbin))
-        mat_pp[:nbin, :nbin]         = mat_pp[2*nbin:3*nbin, 2*nbin:3*nbin] = mat_pp_diag
-        mat_pp[2*nbin:3*nbin, :nbin] = mat_pp[:nbin, 2*nbin:3*nbin]         = mat_pp_offdiag
-        mat_pp[nbin:2*nbin, nbin:2*nbin]                                    = mat_pp_diag-mat_pp_offdiag  
-
+        nbiny, nbinx = mat_pp_diag.shape # pp matrix is always nxn matrix
+        mat_pp = np.zeros((3*nbiny, 3*nbinx))
+        mat_pp[:nbiny, :nbinx]          = mat_pp[2*nbiny:3*nbiny, 2*nbinx:3*nbinx] = mat_pp_diag
+        mat_pp[2*nbiny:3*nbiny, :nbinx] = mat_pp[:nbiny, 2*nbinx:3*nbinx]          = mat_pp_offdiag
+        mat_pp[nbiny:2*nbiny, nbinx:2*nbinx]                                       = mat_pp_diag-mat_pp_offdiag  
+ 
         return mat_pp
 
     mbb_pp = assamble_mat_pp(mbb_pp_diag, mbb_pp_offdiag)
@@ -75,11 +69,31 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
         file_name = os.path.join(mcm_dir, file_name)
         np.savetxt(file_name, mbb)
 
+    # calc bbl matrix
+    mbb_tt_inv = np.linalg.inv(mbb_tt)
+    mbb_tp_inv = np.linalg.inv(mbb_tp)
+    mbb_pp_inv = np.linalg.inv(mbb_pp)
+
+    mcm_core.binning_matrix(mcm_tt.T,bin_lower,bin_upper,bin_sizes, bbl_tt.T)
+    mcm_core.binning_matrix(mcm_tp.T,bin_lower,bin_upper,bin_sizes, bbl_tp.T) 
+    mcm_core.binning_matrix(mcm_pp_diag.T,bin_lower,bin_upper,bin_sizes, bbl_pp_diag.T)
+    mcm_core.binning_matrix(mcm_pp_offdiag.T,bin_lower,bin_upper,bin_sizes, bbl_pp_offdiag.T)
+
+    bbl_pp = assamble_mat_pp(bbl_pp_diag, bbl_pp_offdiag)
+
+    bbl_tt = np.dot(mbb_tt_inv,bbl_tt)
+    bbl_tp = np.dot(mbb_tp_inv,bbl_tp)
+    bbl_pp = np.dot(mbb_pp_inv,bbl_pp)
+
+    del mcm_tt, mcm_tp, mcm_pp_diag, mcm_pp_offdiag, bbl_pp_diag, bbl_pp_offdiag
+
     save_matrix("TT", mbb_tt); save_matrix("TP", mbb_tp); save_matrix("PP", mbb_pp)
-    save_matrix("TT_inv", np.linalg.inv(mbb_tt)) 
-    save_matrix("TP_inv", np.linalg.inv(mbb_tp))
-    save_matrix("PP_inv", np.linalg.inv(mbb_pp))
-    save_matrix("BBL", bbl) 
+    save_matrix("TT_inv", mbb_tt_inv) 
+    save_matrix("TP_inv", mbb_tp_inv)
+    save_matrix("PP_inv", mbb_pp_inv)
+    save_matrix("BBL_TT", bbl_tt) 
+    save_matrix("BBL_TP", bbl_tp) 
+    save_matrix("BBL_PP", bbl_pp) 
 
 class CUSPS_BINNER(object):
     def __init__(self, bin_edges, lmax=None): 
