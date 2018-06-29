@@ -2,7 +2,7 @@
 # visualize.py
 ##
 #
-import cusps
+import pitas
 import os
 import matplotlib.pyplot as plt
 
@@ -11,9 +11,9 @@ class plotter(object):
     def __init__(self, **kargs):
 
         xscale, yscale = 'linear','linear'
-        if cusps.util.get_from_dict(kargs, 'xscale'):
+        if pitas.util.get_from_dict(kargs, 'xscale'):
             xscale = kargs.pop('xscale')
-        if cusps.util.get_from_dict(kargs, 'yscale'):
+        if pitas.util.get_from_dict(kargs, 'yscale'):
             yscale = kargs.pop('yscale')
 
         self.fig = plt.figure(**kargs)

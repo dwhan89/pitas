@@ -37,7 +37,7 @@ def init(switch = False):
     exit_code = 0
 
     if isinstance(switch, str):
-        switch = cusps.util.str2bool(switch)
+        switch = pitas.util.str2bool(switch)
     else:
         pass
 

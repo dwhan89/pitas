@@ -1,4 +1,4 @@
-import cusps_io
+import pitas_io
 import config
 import power
 import wigner

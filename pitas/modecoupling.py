@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 from enlib import enmap,curvedsky
-from cusps.util import get_spectra
-from cusps.mcm_core import mcm_core
-import cusps, numpy as np, os 
+from pitas.util import get_spectra
+from pitas.mcm_core import mcm_core
+import pitas, numpy as np, os 
 
 def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, transfer=None):
     # expect enmap
 
-    if mcm_dir is None: mcm_dir = cusps.config.get_output_dir()
-    cusps.cusps_io.create_dir(mcm_dir)
+    if mcm_dir is None: mcm_dir = pitas.config.get_output_dir()
+    pitas.pitas_io.create_dir(mcm_dir)
 
     modlmap   = window_temp.modlmap()
     binner    = CUSPS_BINNER(bin_edges, lmax)

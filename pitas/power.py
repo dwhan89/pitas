@@ -2,8 +2,8 @@
 # power.py
 #- 
 #
-import cusps
-import cusps.modecoupling as mcm
+import pitas
+import pitas.modecoupling as mcm
 import os, numpy as np
 from orphics import stats
 import warnings
@@ -138,9 +138,9 @@ class CUSPS(object):
         return (lbin, clee, cleb, clbb)
 
 def get_bbl(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=None, output_dir=None, lmax=None, transfer=None, overwrite=False): 
-    if output_dir is None: output_dir = cusps.config.get_output_dir()
+    if output_dir is None: output_dir = pitas.config.get_output_dir()
     if mcm_identifier is not None: mcm_dir = os.path.join(output_dir, mcm_identifier)
-    if cusps.mpi.rank == 0: print "[get_bbl] mcm directory: %s" %mcm_dir
+    if pitas.mpi.rank == 0: print "[get_bbl] mcm directory: %s" %mcm_dir
 
     bbl_tt, bbl_tp, bbl_pp = (None, None, None)
     def load_bbl(key):
@@ -156,13 +156,13 @@ def get_bbl(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=None,
         bbl_tp = load_bbl('TP')
         bbl_pp = load_bbl('PP')
     except:
-        if cusps.mpi.rank == 0: 
+        if pitas.mpi.rank == 0: 
             print "failed to load mcm. calculating mcm"
-            cusps.util.check_None(window_scalar, window_pol, bin_edges, mcm_dir)
+            pitas.util.check_None(window_scalar, window_pol, bin_edges, mcm_dir)
             mcm.generate_mcm(window_scalar, window_pol, bin_edges, mcm_dir, lmax=lmax, transfer=transfer)
             print "finish calculating mcm"
         else: pass
-        cusps.mpi.barrier()
+        pitas.mpi.barrier()
 
         bbl_tt = load_bbl('TT') 
         bbl_tp = load_bbl('TP')
@@ -170,9 +170,9 @@ def get_bbl(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=None,
     return (bbl_tt, bbl_tp, bbl_pp)
 
 def get_mcm_inv(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=None, output_dir=None, lmax=None, transfer=None, overwrite=False):
-    if output_dir is None: output_dir = cusps.config.get_output_dir()
+    if output_dir is None: output_dir = pitas.config.get_output_dir()
     if mcm_identifier is not None: mcm_dir = os.path.join(output_dir, mcm_identifier)
-    if cusps.mpi.rank == 0: print "mcm directory: %s" %mcm_dir
+    if pitas.mpi.rank == 0: print "mcm directory: %s" %mcm_dir
 
     mbb_tt_inv, mbb_tp_inv, mbb_pp_inv = (None, None, None)
     def load_mbb_inv(key):
@@ -188,23 +188,23 @@ def get_mcm_inv(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=N
         mbb_tp_inv = load_mbb_inv('TP_inv')
         mbb_pp_inv = load_mbb_inv('PP_inv')
     except:
-        if cusps.mpi.rank == 0: 
+        if pitas.mpi.rank == 0: 
             print "failed to load mcm. calculating mcm"
-            cusps.util.check_None(window_scalar, window_pol, bin_edges, mcm_dir)
+            pitas.util.check_None(window_scalar, window_pol, bin_edges, mcm_dir)
             mcm.generate_mcm(window_scalar, window_pol, bin_edges, mcm_dir, lmax=lmax, transfer=transfer)
             print "finish calculating mcm"
         else: pass
-        cusps.mpi.barrier()
+        pitas.mpi.barrier()
 
         mbb_tt_inv, mbb_tp_inv, mbb_pp_inv = get_mcm_inv(mcm_identifier, overwrite=False)
 
     return (mbb_tt_inv, mbb_tp_inv, mbb_pp_inv)
 
 def get_raw_power(emap1, emap2=None, lmax=None, normalize=True):
-    l, cl = cusps.util.get_spectra(emap1, emap2, lmax=lmax)
+    l, cl = pitas.util.get_spectra(emap1, emap2, lmax=lmax)
 
     if normalize:
-        fsky  = cusps.util.get_fsky(emap1)
+        fsky  = pitas.util.get_fsky(emap1)
         cl    /= fsky
     else: pass
 
