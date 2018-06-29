@@ -1,8 +1,8 @@
-# CUSPS
-**CU**rved **S**ky **P**ower **S**pectra
+# PITAS
+**P**ower-spectrum **I**n **T**racts **A**lgorithm on the **S**phere
 
 ------
-This code is a wrapper around Thibaut's curved sky mode coupling routine, so that it can seamlessly integrate with existing ACT analysis pipelines. 
+PITAS is an agile routine to compute power spectra of curved-sky in cylidrical projection (CAR, CEA). The core of the routine is the *MASTER* algorithm implemented by Thibaut Louis. It implements *PURE-EB* to compute unbiased CMB polarization spectra. DRC3JJ routine is packaged together to compute Wigner 3j symbol.  
 
 ------
 
