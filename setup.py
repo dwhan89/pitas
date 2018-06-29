@@ -8,24 +8,24 @@ except ImportError:
     from distutils.core import setup
 
 config = {
-    'description': 'CUSPS: Curved Sky Power Spectrum',
+    'description': 'PITAS: (P)owerspectrum (I)n (T)racts (A)lgorithm on the (S)phere',
     'author':  "Thibaut Louis, Dongwon 'DW' HAN",
     'url': 'https://github.com/dwhan89/cusps',
-    'download_url': 'https://github.com/dwhan89/cusps',
+    'download_url': 'https://github.com/dwhan89/pitas',
     'author_email': 'dongwon.han@stonybrook.edu',
-    'version': '0.1',
+    'version': '1.0',
     'install_requires': [
         'numpy',
         'matplotlib',
         'enlib',
         ],
     'packages': [
-        'cusps',
-        'cusps.wigner',
-        'cusps.mcm_core'
+        'pitas',
+        'pitas.wigner',
+        'pitas.mcm_core'
         ],
     'scripts': [],
-    'name': 'cusps'
+    'name': 'pitas'
 }
 
 setup(**config)
