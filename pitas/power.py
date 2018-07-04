@@ -5,8 +5,8 @@
 import pitas
 import pitas.modecoupling as mcm
 import os, numpy as np
-from orphics import stats
 import warnings
+from enlib import enmap
 
 class PITAS(object):
     def __init__(self, mcm_identifier, window_scalar, window_pol, bin_edges, lmax=None, transfer=None, overwrite=False):
@@ -136,6 +136,30 @@ class PITAS(object):
         clee, cleb, clbb = (clpol[:nbin], clpol[nbin:2*nbin], clpol[2*nbin:3*nbin])
         
         return (lbin, clee, cleb, clbb)
+
+class PITAS4FLIPPER(PITAS):
+    def __init__(self, mcm_identifier, window_scalar, window_pol, bin_edges, lmax=None, transfer=None, overwrite=False):
+        super(PITAS4FLIPPER, self).__init__(mcm_identifier, l2e(window_scalar), l2e(window_pol), bin_edges, lmax=lmax, transfer=transfer, overwrite=overwrite)
+        
+    #def get_power(self,lmap1, lmap2=None, polcomb='SS', pure_eb=True):
+    #    emap2 = None if lmap2 is None else l2e(lmap2)
+    #    return  super(PITAS4FLIPPER, self).get_power(l2e(lmap1), emap2, polcomb=polcomb, pure_eb=pure_eb)
+
+    def get_power_scalarXscalar(self, lmap1, lmap2):
+        emap2 = None if lmap2 is None else l2e(lmap2)
+        return  super(PITAS4FLIPPER, self).get_power_scalarXscalar(l2e(lmap1), emap2)
+
+    def get_power_scalarXvector(self, lmap1, lmap2):
+        emap2 = None if lmap2 is None else l2e(lmap2)
+        return  super(PITAS4FLIPPER, self).get_power_scalarXvector(l2e(lmap1), emap2)
+
+    def get_power_pureeb(self, emap, bmap):
+        return super(PITAS4FLIPPER, self).get_power_pureeb(l2e(emap), l2e(bmap))
+
+def l2e(lmap):
+    ''' convert from flipper liteMap to enmap '''
+    return enmap.from_flipper(lmap)
+
 
 def get_bbl(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=None, output_dir=None, lmax=None, transfer=None, overwrite=False): 
     if output_dir is None: output_dir = pitas.config.get_output_dir()
