@@ -116,14 +116,21 @@ class PITAS(object):
         return (lbin, clbin)
 
 
-    def get_power_pureeb(self, emap, bmap):
-        l, clee        = get_raw_power(emap, emap, lmax=self.lmax, normalize=False)
+    def get_power_pureeb(self, emap1, bmap1, emap2=None, bmap2=None):
+        l, clee        = get_raw_power(emap1, emap2, lmax=self.lmax, normalize=False)
         lbin, cleebin  = self.binner.bin(l,clee)
 
-        l, cleb        = get_raw_power(emap, bmap, lmax=self.lmax, normalize=False)
+        cleb           = None
+        if emap2 is None or bmap2 is None:
+            l, cleb        = get_raw_power(emap1, bmap1, lmax=self.lmax, normalize=False)
+        else:
+            l, cleb1       = get_raw_power(emap1, bmap2, lmax=self.lmax, normalize=False)
+            l, cleb2       = get_raw_power(emap2, bmap1, lmax=self.lmax, normalize=False)
+            cleb           = (cleb1+cleb2)/2. 
+            del cleb1, cleb2
         lbin, clebbin  = self.binner.bin(l,cleb)
 
-        l, clbb        = get_raw_power(bmap, bmap, lmax=self.lmax, normalize=False)
+        l, clbb        = get_raw_power(bmap1, bmap2, lmax=self.lmax, normalize=False)
         lbin, clbbbin  = self.binner.bin(l,clbb)
 
         clpol   = np.concatenate([cleebin, clebbin, clbbbin])
@@ -153,8 +160,10 @@ class PITAS4FLIPPER(PITAS):
         emap2 = None if lmap2 is None else l2e(lmap2)
         return  super(PITAS4FLIPPER, self).get_power_scalarXvector(l2e(lmap1), emap2)
 
-    def get_power_pureeb(self, emap, bmap):
-        return super(PITAS4FLIPPER, self).get_power_pureeb(l2e(emap), l2e(bmap))
+    def get_power_pureeb(self, emap1, bmap1, emap2=None, bmap2=None):
+        eemap2 = None if emap2 is None else l2e(emap2)
+        bemap2 = None if bmap2 is None else l2e(bmap2)
+        return super(PITAS4FLIPPER, self).get_power_pureeb(l2e(emap1), l2e(bmap1), eemap2, bemap2)
 
 def l2e(lmap):
     ''' convert from flipper liteMap to enmap '''
