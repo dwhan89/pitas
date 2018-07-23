@@ -26,7 +26,7 @@ PITAS is an agile routine to compute power spectrum of curved-sky in cylidrical 
 ```
   cd <path to pitas>/pitas
   export PITAS_COMP=<Compiler File> ! ex) export PITAS_COMP=nersc_cori
-                                    ! Check pitas/compile_opts for all options
+                                    ! Check pitas/compile_opts for more options
   make
   cd ..
   pip install -e . --user           ! install python module 
