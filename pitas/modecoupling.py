@@ -4,8 +4,11 @@ from pitas.util import get_spectra
 from pitas.mcm_core import mcm_core
 import pitas, numpy as np, os 
 import warnings
+from scipy.sparse import csc_matrix
+import scipy.sparse.linalg as splin
 
-def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, transfer=None):
+
+def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, lmin=None, transfer=None):
     # expect enmap
     warnings.warn('[pitas/modecoupling] generating mcm')
 
@@ -20,19 +23,21 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
     bin_lower = binner.bin_lower
     bin_upper = binner.bin_upper
 
-    def get_windowspec(window1, window2=None, lmax=lmax):
+    def get_windowspec(window1, window2=None, lmax=lmax, lmin=lmin):
         l, cl = get_spectra(window1, window2, lmax=lmax)
         cl    *= (2.*l+1.)
         return l, cl
-    
+
+
     l, cl_temp   = get_windowspec(window_temp, lmax=lmax)
     l, cl_cross  = get_windowspec(window_temp, window_pol, lmax=lmax)
     l, cl_pol    = get_windowspec(window_pol, lmax=lmax)
-
+    
     # load transfer function
     f_tran = None
     if transfer is not None:
         l_tran, f_tran = transfer
+        assert(l_tran[0] == 0)
         l_tran, f_tran = l_tran[:lmax],f_tran[:lmax]
         transfer       = f_tran **2.
     else: 
@@ -47,6 +52,18 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
 
     mcm_core.calc_mcm(cl_temp, cl_cross, cl_pol, transfer, mcm_tt.T, mcm_tp.T, mcm_pp_diag.T, mcm_pp_offdiag.T)
 
+    def apply_lmin(mcm, lmin=lmin):
+        if lmin is None or lmin <= 0: return mcm
+        idx = lmin-2
+        mcm[:idx,:]    = mcm[:,:idx] = 0.
+        mcm[:idx,:idx] = np.diag(np.ones(idx))
+        return mcm
+    
+    mcm_tt         = apply_lmin(mcm_tt)
+    mcm_tp         = apply_lmin(mcm_tp)
+    mcm_pp_diag    = apply_lmin(mcm_pp_diag)
+    mcm_pp_offdiag = apply_lmin(mcm_pp_offdiag)
+    
     # bin mcm
     def bin_mcm(mcm_full, mcm_binned):
         mcm_core.bin_mcm(mcm_full.T, bin_lower, bin_upper, bin_sizes.T, mcm_binned.T)
@@ -71,7 +88,6 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, tr
         file_name = os.path.join(mcm_dir, file_name)
         np.savetxt(file_name, mbb)
 
-    # calc bbl matrix
     mbb_tt_inv = np.linalg.inv(mbb_tt)
     mbb_tp_inv = np.linalg.inv(mbb_tp)
     mbb_pp_inv = np.linalg.inv(mbb_pp)

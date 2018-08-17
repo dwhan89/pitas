@@ -10,10 +10,10 @@
 #     * finalize() = terminate the MPI session (otherwise if one node finishes before the others they may be killed as well).
 #
 #
+import pitas
 import warnings
 import sys
 import numpy as np
-
 
 # blank function template
 def _pass():
@@ -150,7 +150,7 @@ def transfer_data(data, tag, dest=0, mode='append'):
             print "rank%d is receiving tag%d data from rank%d" %(dest,tag,sender)
             if type(data) == dict:
                 recv_data = comm.recv(source=sender, tag=tag)
-                cmblens.util.merge_dict(data,recv_data)
+                pitas.util.merge_dict(data,recv_data)
             elif type(data) == np.ndarray:
                 recv_data = comm.recv(source=sender, tag=tag)
                 if mode == 'append':

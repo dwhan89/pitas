@@ -3,7 +3,9 @@
 #-
 #
 from enlib import enmap, curvedsky
+from enlib import utils as eutils
 import healpy as hp, numpy as np
+from scipy.interpolate import interp1d
 
 ############ fsky ###################
 def get_fsky(emap):
@@ -11,11 +13,12 @@ def get_fsky(emap):
     fsky = area / (4.*np.pi)
     return fsky
 
-
 ############ spectra ################
 def get_spectra(emap1, emap2=None, lmax=5000):
-    alm1 = curvedsky.map2alm(emap1, lmax=lmax).astype(np.complex128)
-    alm2 = alm1 if emap2 is None else curvedsky.map2alm(emap2, lmax=lmax).astype(np.complex128)
+    atol = np.min(np.array(emap1.pixshape()/eutils.arcmin))
+
+    alm1 = curvedsky.map2alm(emap1, lmax=lmax, atol=atol).astype(np.complex128)
+    alm2 = alm1 if emap2 is None else curvedsky.map2alm(emap2, lmax=lmax, atol=atol).astype(np.complex128)
 
     cl  = hp.alm2cl(alm1, alm2, lmax=lmax)
     l   = np.arange(len(cl))
@@ -33,15 +36,50 @@ def cl2dl(l, cl):
 
 ############# maps #################
 def tqu2teb(tmap, qmap, umap, lmax):
+    atol = np.min(np.array(tmap.pixshape()/eutils.arcmin))
     tqu     = np.zeros((3,)+tmap.shape)
     tqu[0], tqu[1], tqu[2] = (tmap, qmap, umap)
     tqu     = enmap.enmap(tqu, tmap.wcs)
-    alm     = curvedsky.map2alm(tqu, lmax=lmax)
+    alm     = curvedsky.map2alm(tqu, lmax=lmax, atol=atol)
 
     teb     = curvedsky.alm2map(alm[:,None], tqu.copy()[:,None], spin=0)[:,0]
     del tqu
 
     return (teb[0], teb[1], teb[2]) #tmap, emap, bmap
+
+def pixelwindow2tqu(self, tmap, qmap, umap, mode='conv'):
+    assert(mode in ['conv', 'deconv'])
+    maps = [tmap, qmap, umap]
+    wfact = 1. if mode == 'conv' else -1.
+    log.info('[delensing/maps] pixel window %s' %mode)
+    for i in range(3):
+        imap    = enmap.apply_window(imap, wfact)
+
+    return (maps[0], maps[1], maps[2])
+
+def cos_highpass(lmax, lmin=0, l_trim=20000):
+    l = np.arange(l_trim +1.)
+    f = np.ones(len(l))
+    
+    loc    = np.where(l < lmin)
+    f[loc] = 0.
+    
+    loc    = np.where((l>=lmin)&(l<=lmax))
+    l_sub  = l[loc]
+
+    cos_filt = np.cos((l_sub-lmax)/(lmax-lmin)*np.pi/2.)
+    f[loc]   = cos_filt
+
+    return (l, f)
+
+
+
+def interp(x, fx, y, fill_value=0., bounds_error=False):
+    # interp f(x) at y
+    func = interp1d(x, fx, fill_value=fill_value, bounds_error=bounds_error)
+    return func(y)
+
+
 
 ############# misc #################
 
@@ -112,6 +150,14 @@ def get_default_bin_edges(lmax):
         bin_edges = np.concatenate((np.linspace(0,400,20), np.linspace(400, lmax, bin_num)))
         bin_edges = np.unique(bin_edges)
     return bin_edges
+
+
+
+
+
+
+
+
 
 
 

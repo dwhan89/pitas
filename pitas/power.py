@@ -9,7 +9,7 @@ import warnings
 from enlib import enmap
 
 class PITAS(object):
-    def __init__(self, mcm_identifier, window_scalar, window_pol, bin_edges, lmax=None, transfer=None, overwrite=False):
+    def __init__(self, mcm_identifier, window_scalar, window_pol, bin_edges, lmax=None, lmin=None, transfer=None, overwrite=False):
         self.mcm_identifier = mcm_identifier
         self.window_scalar    = window_scalar
         self.window_pol     = window_pol
@@ -17,6 +17,7 @@ class PITAS(object):
         binner              = mcm.PITAS_BINNER(bin_edges, lmax)
         self.binner         = binner
         self.lmax           = binner.lmax
+        self.lmin           = lmin
         self.bin_edges      = binner.bin_edges
         self.bin_center     = binner.bin_center
         self.nbin           = len(self.bin_center)        
@@ -24,7 +25,7 @@ class PITAS(object):
         self.transfer       = transfer
         
         ret = get_mcm_inv(self.mcm_identifier, self.window_scalar, self.window_pol, self.bin_edges,\
-            None, lmax, transfer, overwrite)
+            None, lmax, lmin, transfer, overwrite)
         
         self.mcm_tt_inv     = ret[0].copy()
         self.mcm_tp_inv     = ret[1].copy()
@@ -202,7 +203,7 @@ def get_bbl(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=None,
         bbl_pp = load_bbl('PP')
     return (bbl_tt, bbl_tp, bbl_pp)
 
-def get_mcm_inv(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=None, output_dir=None, lmax=None, transfer=None, overwrite=False):
+def get_mcm_inv(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=None, output_dir=None, lmax=None, lmin=None, transfer=None, overwrite=False):
     if output_dir is None: output_dir = pitas.config.get_output_dir()
     if mcm_identifier is not None: mcm_dir = os.path.join(output_dir, mcm_identifier)
     if pitas.mpi.rank == 0: print "mcm directory: %s" %mcm_dir
@@ -224,7 +225,7 @@ def get_mcm_inv(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=N
         if pitas.mpi.rank == 0: 
             print "failed to load mcm. calculating mcm"
             pitas.util.check_None(window_scalar, window_pol, bin_edges, mcm_dir)
-            mcm.generate_mcm(window_scalar, window_pol, bin_edges, mcm_dir, lmax=lmax, transfer=transfer)
+            mcm.generate_mcm(window_scalar, window_pol, bin_edges, mcm_dir, lmax=lmax, lmin=lmin, transfer=transfer)
             print "finish calculating mcm"
         else: pass
         pitas.mpi.barrier()
@@ -232,6 +233,8 @@ def get_mcm_inv(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=N
         mbb_tt_inv, mbb_tp_inv, mbb_pp_inv = get_mcm_inv(mcm_identifier, overwrite=False)
 
     return (mbb_tt_inv, mbb_tp_inv, mbb_pp_inv)
+
+
 
 def get_raw_power(emap1, emap2=None, lmax=None, normalize=True):
     l, cl = pitas.util.get_spectra(emap1, emap2, lmax=lmax)
