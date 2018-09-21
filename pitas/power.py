@@ -9,7 +9,7 @@ import warnings
 from enlib import enmap
 
 class PITAS(object):
-    def __init__(self, mcm_identifier, window_scalar, window_pol, bin_edges, lmax=None, lmin=None, transfer=None, overwrite=False):
+    def __init__(self, mcm_identifier, window_scalar, window_pol, bin_edges, lmax=None, lmin=None, transfer=None, overwrite=False, l_suppress=None):
         self.mcm_identifier = mcm_identifier
         self.window_scalar    = window_scalar
         self.window_pol     = window_pol
@@ -21,6 +21,7 @@ class PITAS(object):
         self.bin_edges      = binner.bin_edges
         self.bin_center     = binner.bin_center
         self.nbin           = len(self.bin_center)        
+        self.l_suppress     = l_suppress if l_suppress is not None else []
 
         self.transfer       = transfer
         
@@ -97,7 +98,7 @@ class PITAS(object):
         return lbin, clbin 
 
     def get_power_scalarXscalar(self, emap1, emap2):
-        l, cl        = get_raw_power(emap1, emap2, lmax=self.lmax, normalize=False)
+        l, cl        = get_raw_power(emap1, emap2, lmax=self.lmax, normalize=False, l_suppress=self.l_suppress)
         lbin, clbin  = self.binner.bin(l,cl)
         del l, cl
 
@@ -107,7 +108,7 @@ class PITAS(object):
         return (lbin, clbin)
 
     def get_power_scalarXvector(self, emap1, emap2):
-        l, cl        = get_raw_power(emap1, emap2, lmax=self.lmax, normalize=False)
+        l, cl        = get_raw_power(emap1, emap2, lmax=self.lmax, normalize=False, l_suppress=self.l_suppress)
         lbin, clbin  = self.binner.bin(l,cl)
         del l, cl
 
@@ -118,20 +119,20 @@ class PITAS(object):
 
 
     def get_power_pureeb(self, emap1, bmap1, emap2=None, bmap2=None):
-        l, clee        = get_raw_power(emap1, emap2, lmax=self.lmax, normalize=False)
+        l, clee        = get_raw_power(emap1, emap2, lmax=self.lmax, normalize=False, l_suppress=self.l_suppress)
         lbin, cleebin  = self.binner.bin(l,clee)
 
         cleb           = None
         if emap2 is None or bmap2 is None:
-            l, cleb        = get_raw_power(emap1, bmap1, lmax=self.lmax, normalize=False)
+            l, cleb        = get_raw_power(emap1, bmap1, lmax=self.lmax, normalize=False, l_suppress=self.l_suppress)
         else:
-            l, cleb1       = get_raw_power(emap1, bmap2, lmax=self.lmax, normalize=False)
-            l, cleb2       = get_raw_power(emap2, bmap1, lmax=self.lmax, normalize=False)
+            l, cleb1       = get_raw_power(emap1, bmap2, lmax=self.lmax, normalize=False, l_suppress=self.l_suppress)
+            l, cleb2       = get_raw_power(emap2, bmap1, lmax=self.lmax, normalize=False, l_suppress=self.l_suppress)
             cleb           = (cleb1+cleb2)/2. 
             del cleb1, cleb2
         lbin, clebbin  = self.binner.bin(l,cleb)
 
-        l, clbb        = get_raw_power(bmap1, bmap2, lmax=self.lmax, normalize=False)
+        l, clbb        = get_raw_power(bmap1, bmap2, lmax=self.lmax, normalize=False, l_suppress=self.l_suppress)
         lbin, clbbbin  = self.binner.bin(l,clbb)
 
         clpol   = np.concatenate([cleebin, clebbin, clbbbin])
@@ -236,12 +237,17 @@ def get_mcm_inv(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=N
 
 
 
-def get_raw_power(emap1, emap2=None, lmax=None, normalize=True):
-    l, cl = pitas.util.get_spectra(emap1, emap2, lmax=lmax)
+def get_raw_power(emap1, emap2=None, lmax=None, normalize=True, l_suppress=None):
+    l, cl      = pitas.util.get_spectra(emap1, emap2, lmax=lmax)
+    l_suppress = l_suppress if l_suppress is not None else []
 
     if normalize:
         fsky  = pitas.util.get_fsky(emap1)
         cl    /= fsky
     else: pass
+
+    for l_sup in l_suppress:
+        loc     = np.where(l==l_sup)
+        cl[loc] = 0.
 
     return (l, cl)
