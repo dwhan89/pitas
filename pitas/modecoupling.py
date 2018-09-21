@@ -114,14 +114,21 @@ def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, lm
     save_matrix("BBL_PP", bbl_pp) 
 
 class PITAS_BINNER(object):
-    def __init__(self, bin_edges, lmax=None): 
+    def __init__(self, bin_edges, lmax=None, lmin=None): 
 
         lmax      = int(np.max(bin_edges) if lmax is None else lmax)
         assert(lmax >= 0.)
-        
+
         bin_edges    = bin_edges.astype(np.int)
         bin_edges[0] = 2
+        
+        lmin         = int(np.min(bin_edges) if lmin is None else lmin)
+        if lmin < 2: lmin = 2
+        loc          = np.where(bin_edges >= lmin)
+        bin_edges    = bin_edges[loc]
+        bin_edges[0] = lmin 
 
+        
         bin_lower      = bin_edges[:-1].copy()
         bin_lower[1:] += 1
         bin_upper      = bin_edges[1:].copy()

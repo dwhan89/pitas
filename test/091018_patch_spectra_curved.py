@@ -42,7 +42,7 @@ subtasks = cmblens.mpi.taskrange(imin=start, imax=end)
 
 # directory setup
 theory_dir  = '/global/homes/d/dwhan89/cori/workspace/cmblens/inputParams'
-postfix     = '091018_fullsky_0.5res_oldbin'
+postfix     = '091018_fullsky_0.5res_oldbin_interger'
 output_dir  = os.path.join('/global/homes/d/dwhan89/shared/outbox/cori/test_cusps', postfix)
 output_path = lambda x: os.path.join(output_dir, x)
 
@@ -53,8 +53,9 @@ cmblens.mpi.barrier()
 
 
 # load theory
-sim_lmax = 8000
+
 lmax     = 6000
+sim_lmax = 8000
 input_theo = powspec.read_camb_full_lens(os.path.join(theory_dir, 'cosmo2017_10K_acc3_lenspotentialCls.dat')) 
 theo       = cmblens.theory.load_theory_cls('cosmo2017_10K_acc3_lensed_cmb', unit='camb', l_interp=None)
 l_th       = theo['l']
@@ -120,14 +121,16 @@ def add_spectra(tmap, emap, bmap, sim_idx):
         l, cl = power.get_raw_power(emap1, emap2=emap2, lmax=lmax, normalize=False)
         lbin, clbin = binner.bin(l,cl)
         st.add_data('dl%s_raw'%polcomb, sim_idx, cl2dl(lbin, clbin))
+        st.add_data('dl%s_raw_all'%polcomb, sim_idx, cl2dl(l, cl))
 
+        
         theo_idx  = 'cl%s'% polcomb
         frac_diff =  (clbin - theo_bin[theo_idx])/theo_bin[theo_idx]
         st.add_data('frac%s_raw'%polcomb, sim_idx, frac_diff)
 
 plot_only       = False
 stat_override   = False
-stat_identifier = '0.5arcmin_fullsky_cusps_ps_lmax%d_oldbin' %sim_lmax
+stat_identifier = '0.5arcmin_fullsky_cusps_ps_lmax%d_oldbin_allint' %sim_lmax
 st = cmblens.stats.STATS(stat_identifier=stat_identifier, overwrite=stat_override)
 
 for sim_idx in subtasks:
@@ -156,7 +159,21 @@ def add_with_err(plotter, st, l, key, **kwargs):
         plotter.add_err(l, mean, err, ls='--', alpha=0.5, marker='o', **kwargs)
     else:
         plotter.add_data(l, mean, ls='--', alpha=0.5, **kwargs)
-        
+
+for polcomb in polcombs:
+    
+    prefix  = 'dl%s' % polcomb
+    st_all_key  = '%s_raw_all'%prefix
+    st_bin_key  = '%s_raw'%prefix
+
+    for sim_idx in st.storage[st_all_key].keys():
+        l  = np.arange(len(st.storage[st_all_key][sim_idx]))
+        dl = st.storage[st_all_key][sim_idx] 
+
+        lbin, dlbin = binner.bin(l,dl)
+        st.storage[st_bin_key][sim_idx] = dlbin
+
+st.get_stats()
 
 if cmblens.mpi.rank == 0:
     log.info("plotting")
@@ -167,20 +184,51 @@ if cmblens.mpi.rank == 0:
         plotter = pitas.visualize.plotter(yscale='linear')
         plotter.add_data(theo_bin['l'], theo_bin[prefix], label='Dl%s Binned Theory'%polcomb.upper()) 
         add_with_err(plotter, st, lbin, '%s_raw'%prefix, label='Dl%s (PITAS)'%polcomb.upper()) 
-        plotter.set_title('Curved Sky Dl_%s ' %polcomb.upper())
+        plotter.set_title('Curved Sky Lensed Dl_%s ' %polcomb.upper())
         plotter.set_xlabel(r'$l$') 
         plotter.set_ylabel(r'$Dl(l)$')
         plotter.set_xlim([-50,5000])
         plotter.show_legends()
         plotter.save(output_path("%s_spec_%s.png"%(prefix, coords_str)))
 
+    for polcomb in polcombs:
+        if polcomb == 'pp': continue
+        prefix  = 'dl%s' % polcomb
+        plotter = pitas.visualize.plotter(xscale='log', yscale='linear') 
+        plotter.add_data(theo['l'], theo[prefix], label='Dl%s Theory'%polcomb.upper()) 
+        st_key  = '%s_raw_all'%prefix
+        for sim_idx in st.storage[st_key].keys():
+            l = np.arange(len(st.storage[st_key][sim_idx]))
+            plotter.add_data(l, st.storage[st_key][sim_idx], color='r', alpha=0.01) 
+        plotter.set_title('Curved Sky Lensed Dl_%s ' %polcomb.upper())
+        plotter.set_xlabel(r'$l$') 
+        plotter.set_ylabel(r'$Dl(l)$')
+        plotter.set_xlim([-50,1000])
+        plotter.show_legends()
+        plotter.save(output_path("%s_all_spec_%s.png"%(prefix, coords_str)))
    
+    for polcomb in polcombs:
+        if polcomb == 'pp': continue
+        prefix  = 'dl%s' % polcomb
+        plotter = pitas.visualize.plotter(xscale='linear', yscale='linear') 
+        plotter.add_data(theo_bin['l'], theo_bin[prefix], label='Dl%s Binned_Theory'%polcomb.upper()) 
+        st_key  = '%s_raw'%prefix
+        for sim_idx in st.storage[st_key].keys():
+            l = np.arange(len(st.storage[st_key][sim_idx]))
+            plotter.add_data(lbin, st.storage[st_key][sim_idx], color='r', alpha=0.01) 
+        plotter.set_title('Curved Sky Lensed Dl_%s ' %polcomb.upper())
+        plotter.set_xlabel(r'$l$') 
+        plotter.set_ylabel(r'$Dl(l)$')
+        plotter.set_xlim([-50,1000])
+        plotter.show_legends()
+        plotter.save(output_path("%s_binned_spec_%s.png"%(prefix, coords_str)))
+    
     for polcomb in polcombs:
         if polcomb == 'pp': continue
         prefix  = 'dl%s' % polcomb
         plotter = pitas.visualize.plotter(figsize=(10, 8), yscale='linear') 
         add_with_err(plotter, st, lbin, 'frac%s_raw'%polcomb, label='Dl%s (PITAS)'%polcomb.upper())
-        plotter.set_title('Fractional Difference Dl_%s ' %polcomb.upper(), fontsize=22)
+        plotter.set_title('Fractional Difference Lensed Dl_%s ' %polcomb.upper(), fontsize=22)
         plotter.set_xlabel(r'$l$', fontsize=22) 
         plotter.set_ylabel(r'$(sim - theo)/theo$', fontsize=22)
         plotter.set_xlim([-50,5000])
@@ -189,3 +237,4 @@ if cmblens.mpi.rank == 0:
         plotter.show_legends(fontsize=18)
         plotter.save(output_path("frac_diff%s_%s.png"%(prefix, coords_str)))
 
+   
