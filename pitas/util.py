@@ -34,7 +34,12 @@ def check_None(*args):
 def cl2dl(l, cl):
     return cl*(l*(l+1.))/(2*np.pi)
 
-
+def get_cl2dl_factor(clth_bin, dlth_bin):
+    # calculate cl2dl_fact such that
+    # cl2dl_fact * Sum_{l\in b} Cl  = Sum_{l\in b} l(l+1)/Cl/2pi 
+    cl2dl_fact = dlth_bin/clth_bin
+    return cl2dl_fact
+    
 ############# maps #################
 def tqu2teb(tmap, qmap, umap, lmax):
     atol = np.min(np.array(tmap.pixshape()/eutils.arcmin))
