@@ -65,10 +65,10 @@ class plotter(object):
         self.fig.clf()
 
     def vline(self, x=0, **kwargs):
-        self.ax.axvline(**kwargs)
+        self.ax.axvline(x=x,**kwargs)
 
     def hline(self, y=0, **kwargs):
-        self.ax.axhline(y=0, **kwargs)
+        self.ax.axhline(y=y, **kwargs)
 
     def save(self, output):
         print "saving %s" %output
