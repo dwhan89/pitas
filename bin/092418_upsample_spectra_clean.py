@@ -3,9 +3,7 @@ from enlib import enmap, resample, curvedsky
 import healpy as hp
 import os, numpy as np
 from itertools import product
-import liteMapPol
 from orphics import io, maps
-from pitas.util import cl2dl
 import sys
 from actsims.simTools import resample_fft_withbeam
 from scipy import ndimage
@@ -25,7 +23,7 @@ pitas.config.argparser.add_argument('-mo', '--mcm_overwrite',
     help='stats')
 
 pitas.config.argparser.add_argument('-s', '--start',
-    default=0, type=int,
+    default=2, type=int,
     help='lower bound for the sims to be used')
 
 pitas.config.argparser.add_argument('-e', '--end',
@@ -67,6 +65,10 @@ pitas.config.argparser.add_argument('-tf', '--transfer',
 pitas.config.argparser.add_argument('-rs', '--resample',
     default='t',
     help='resample')
+
+pitas.config.argparser.add_argument('-up', '--upsample',
+    default='t',
+    help='upsampling')
 
 pitas.config.argparser.add_argument('-be', '--beam',
     default='f',
@@ -123,6 +125,7 @@ TCMB         = pitas.constants.TCMB
 bin_file     = args.bin
 kspace_cuts  = (90, 50, 0, None) #(kx, ky, lmin, lmax)
 smooth       = args.smooth
+upsample     = pitas.util.str2bool(args.upsample)
 resample     = pitas.util.str2bool(args.resample)
 highpass     = pitas.util.str2bool(args.highpass)
 kxky_filter  = pitas.util.str2bool(args.kxky_filter)
@@ -186,7 +189,9 @@ class MapHandler(object):
             input_file = input_file_temp.format(zpsim_idx, cmb_type, zpsim_idx)
             key = 'I' if cmb_type == 'T' else cmb_type
             ret[key] = enmap.read_fits(input_file, box=coords)
-            nshape, nwcs = enmap.scale_geometry(ret[key].shape, ret[key].wcs, 2)
+            
+            
+            nshape, nwcs = enmap.scale_geometry(ret[key].shape, ret[key].wcs, 2) if upsample else (oshape, owcs)                
 
             if nshape != ret[key].shape:
                 print 'resampling ...'
