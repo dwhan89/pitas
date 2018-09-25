@@ -171,15 +171,12 @@ def get_default_bin_edges(lmax, lmin=0):
     return bin_edges
 '''
 
-def get_default_bin_edges(lmax):
-    bin_edges = None
-    if lmax <= 400:
-        bin_edges = np.linspace(0,400,20)
-    else:
-        bin_num   = (lmax-400)/100
-        if bin_num == 0: bin_num = 1
-        bin_edges = np.concatenate((np.linspace(0,400,20), np.linspace(400, lmax, bin_num)))
-        bin_edges = np.unique(bin_edges)
+def get_default_bin_edges(lmax): 
+    assert(lmax > 0)
+    nbin      = int(lmax/100.)    
+    if nbin == 0: nbin = 1
+
+    bin_edges = np.linspace(0, lmax, nbin+1)
     return bin_edges
 
 
