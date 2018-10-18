@@ -110,7 +110,7 @@ class STATS(object):
 
         return ret
 
-def stats(data, axis=0, ddof=0):
+def stats(data, axis=0, ddof=1.):
     datasize = data.shape
     mean     = np.mean(data, axis=axis)
     cov      = np.cov(data.transpose(), ddof=ddof)
@@ -126,7 +126,7 @@ def chisq_pval(chisq, dof):
     from scipy.stats import chi2
     return 1 - chi2.cdf(chisq, dof)
 
-def chisq(obs, exp, cov_input, ddof=None):
+def chisq(obs, exp, cov_input, ddof=None, sidx=None, eidx=None):
     ''' compute chisq 
         
         input
@@ -142,24 +142,26 @@ def chisq(obs, exp, cov_input, ddof=None):
     from scipy.stats import chi2
 
     diff  = obs-exp if not (exp == 0.).all() else obs.copy()
-   
-    #print cov, diff
     cov  = cov_input.copy()
+
+    if sidx is None: sidx = 0
+    if eidx is None: eidx = len(diff)
+    diff = diff[sidx:eidx]
+    cov  = cov[sidx:eidx, sidx:eidx]
+
     norm = np.mean(np.abs(cov))
     cov  /= norm
-    diff /= np.sqrt(norm) 
-    #print cov, diff
-
+    diff /= np.sqrt(norm)
 
     chisq = np.dot(np.linalg.pinv(cov), diff)
     chisq = np.dot(diff.T, chisq)
 
-    if ddof is None: ddof = len(obs) - 1
+    if ddof is None: ddof = len(obs)
     p     = chi2.sf(chisq, ddof)
 
     return chisq, p
 
-def reduced_chisq(obs, exp, cov, ddof_cor=0.0):
+def reduced_chisq(obs, exp, cov, ddof_cor=0., sidx=None, eidx=None):
     ''' calculate reduced chisq
         The default degree of freedom is k - 1 where k = # of observation.
 
@@ -168,11 +170,17 @@ def reduced_chisq(obs, exp, cov, ddof_cor=0.0):
         cov      : covariance
         ddof_cor : correction to the default degree of the freedom s.t. ddof = k-1-ddof_cor. Defaults to 0
     '''
-    ddof     = len(obs)       # ddof
+    if sidx is None: sidx = 0
+    if eidx is None: eidx = len(obs)
+    obs = obs[sidx:eidx]
+    exp = exp[sidx:eidx]
+    cov = cov[sidx:eidx, sidx:eidx]
+
+    ddof     = len(obs)# ddof
     ddof_cor = float(ddof_cor)
     ddof     = ddof - ddof_cor
 
-    _chisq, p = chisq(obs,exp,cov,ddof)
+    _chisq, p = chisq(obs,exp,cov,ddof, sidx=None, eidx=None)
     rchisq    = _chisq / ddof
 
     return rchisq, p

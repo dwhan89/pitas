@@ -19,7 +19,8 @@ def load_theory_cls(mode, unit='camb', l_interp = None, load_dls=True, fill_valu
     file_dict = {'non-linear_lensed':'non-linear_lensedCls.dat',\
             'bode_almost_wmap5_lmax_1e4_lensed': 'bode_almost_wmap5_lmax_1e4_lensedCls.dat',\
             'bode_almost_wmap5_lmax_1e4_scal': 'bode_almost_wmap5_lmax_1e4_scalCls.dat',\
-            'cosmo2017_10K_acc3_lensed': 'cosmo2017_10K_acc3_lensedCls.dat'
+            'cosmo2017_10K_acc3_lensed': 'cosmo2017_10K_acc3_lensedCls.dat',\
+            'cosmo2017_10K_acc3_unlensed': 'cosmo2017_10K_acc3_scalCls.dat'
             }
 
     assert(unit in ['camb', 'uk'])
@@ -62,7 +63,7 @@ def load_theory_cls(mode, unit='camb', l_interp = None, load_dls=True, fill_valu
         else: pass
 
 
-    elif mode in ['bode_almost_wmap5_lmax_1e4_scal']:
+    elif mode in ['bode_almost_wmap5_lmax_1e4_scal', 'cosmo2017_10K_acc3_unlensed']:
         l    = theo[:,0]
 
         dltt = theo[:,1]
