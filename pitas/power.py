@@ -6,7 +6,7 @@ import pitas
 import pitas.modecoupling as mcm
 import os, numpy as np
 import warnings
-from enlib import enmap
+from pixell import enmap
 
 class PITAS(object):
     def __init__(self, mcm_identifier, window_scalar, window_pol, bin_edges, lmax=None, transfer=None, overwrite=False):
