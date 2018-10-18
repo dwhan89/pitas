@@ -6,8 +6,6 @@ PITAS is an agile routine to compute power spectrum of curved-sky in cylidrical 
 
 ------
 
-**"Best Unbiased Pita on the Sphere™"** 
-
 ![alt text](https://github.com/dwhan89/pitas/blob/master/resource/pita2.jpg "PITAS")
  
 
