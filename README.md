@@ -4,7 +4,7 @@
 ------
 ## Announcement ##
 
-PITAS v1.1.1 will be using pixell (https://github.com/simonsobs/pixell) library, instead of enlib. 
+PITAS v1.1.1 will be using pixell (https://github.com/simonsobs/pixell) library, instead of enlib. Release of v1.1.1 will happen in the week of October 22nd, 2018.
 
 ------
 PITAS is an agile routine to compute power spectrum of curved-sky in cylidrical projection (CAR, CEA). The core of the routine is the *MASTER* algorithm implemented by Thibaut Louis. And it contains an implementation of *PURE-EB* to compute unbiased CMB polarization spectra. As a part of package, it contains DR3JJ routine to compute Wigner 3j symbols.  
