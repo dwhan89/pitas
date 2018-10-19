@@ -2,8 +2,8 @@
 # util.py
 #-
 #
-from enlib import enmap, curvedsky
-from enlib import utils as eutils
+from pixell import enmap, curvedsky
+from pixell import utils as eutils
 import healpy as hp, numpy as np
 from scipy.interpolate import interp1d, interp2d, RectBivariateSpline
 #from scipy.interpolate import griddata

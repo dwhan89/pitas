@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from enlib import enmap,curvedsky
+from pixell import enmap,curvedsky
 from pitas.util import get_spectra
 from pitas.mcm_core import mcm_core
 import pitas, numpy as np, os 

@@ -13,10 +13,11 @@ config = {
     'url': 'https://github.com/dwhan89/cusps',
     'download_url': 'https://github.com/dwhan89/pitas',
     'author_email': 'dongwon.han@stonybrook.edu',
-    'version': '1.0',
+    'version': '1.1.1',
     'install_requires': [
         'numpy',
-        'matplotlib'
+        'matplotlib',
+        'pixell'
         ],
     'packages': [
         'pitas',
