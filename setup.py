@@ -9,8 +9,8 @@ except ImportError:
 
 config = {
     'description': 'PITAS: (P)owerspectrum (I)n (T)racts (A)lgorithm on the (S)phere',
-    'author':  "Thibaut Louis, Dongwon 'DW' HAN",
-    'url': 'https://github.com/dwhan89/cusps',
+    'author':  "Dongwon 'DW' HAN, Thibaut Louis",
+    'url': 'https://github.com/dwhan89/pitas',
     'download_url': 'https://github.com/dwhan89/pitas',
     'author_email': 'dongwon.han@stonybrook.edu',
     'version': '1.1.1',
