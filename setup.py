@@ -16,8 +16,7 @@ config = {
     'version': '1.1.1',
     'install_requires': [
         'numpy',
-        'matplotlib',
-        'pixell'
+        'matplotlib'
         ],
     'packages': [
         'pitas',
