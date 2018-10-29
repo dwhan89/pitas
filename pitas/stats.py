@@ -8,7 +8,7 @@ import numpy as np, os, cPickle as pickle
 class STATS(object):
 
     def __init__(self, stat_identifier=None, output_dir=None, overwrite=False):
-        self.output_dir  = output_dir if output_dir else os.path.join(pitas.config.get_default_output_dir(), 'stats')
+        self.output_dir  = output_dir if output_dir else os.path.join(pitas.config.get_output_dir(), 'stats')
         if pitas.mpi.rank == 0 : 
             print "[STATS] output_dir is %s" %self.output_dir
             pitas.pitas_io.create_dir(self.output_dir)
