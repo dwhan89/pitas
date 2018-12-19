@@ -130,7 +130,7 @@ def add_spectra(tmap, emap, bmap, deconv):
             if polcomb in ['pp']: continue
             emap1 = cmb_dict[polcomb[0]]
             emap2 = cmb_dict[polcomb[1]]
-            print '[add_spectra]:', polcomb
+            print('[add_spectra]:', polcomb)
 
             l, cl = power.get_raw_power(emap1, emap2=emap2, lmax=lmax)   
             lbin, clbin = binner.binned(l,cl)
@@ -146,7 +146,7 @@ def add_spectra(tmap, emap, bmap, deconv):
             if polcomb in ['ee', 'eb', 'bb', 'pp']: continue
             emap1 = cmb_dict[polcomb[0]]
             emap2 = cmb_dict[polcomb[1]] 
-            print '[add_spectra]:', polcomb
+            print('[add_spectra]:', polcomb)
             l, cl = cusps_fc.get_power(emap1, emap2=emap2, polcomb=polcomb.upper())
             #cl    /= fsky
             lbin, clbin = binner.binned(l,cl)
@@ -157,7 +157,7 @@ def add_spectra(tmap, emap, bmap, deconv):
             st.add_to_stats('frac%s_deconv'%polcomb, frac_diff)
     
         if 'pp' in polcombs:
-            print '[add_spectra]:', 'pp'
+            print('[add_spectra]:', 'pp')
             lbin, clee, cleb, clbb = cusps_fc.get_pureeb_power(emap, bmap) 
             #cleb    /= fsky
             #clbb    /= fsky
@@ -176,7 +176,7 @@ def add_spectra(tmap, emap, bmap, deconv):
             st.add_to_stats('frac%s_deconv'%'bb', frac_diff)
 
 theo_bin = {}
-for key in theo.keys():
+for key in list(theo.keys()):
     if key == 'l': continue
     lbin_th, clbin_th = cusps_fc.bin_theory(l_th, theo[key])
     

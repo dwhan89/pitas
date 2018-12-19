@@ -99,7 +99,7 @@ def qu2eb(qmap, umap):
 
 # bin the theory
 theo_bin = {}
-for key in theo.keys():
+for key in list(theo.keys()):
     if key == 'l': continue
     #lbin_th, clbin_th = binner.binned(l_th, theo[key])
     lbin_th, clbin_th = cusps_fc.bin_theory(l_th, theo[key]) 

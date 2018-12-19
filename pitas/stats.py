@@ -3,14 +3,14 @@
 #-
 #
 import pitas
-import numpy as np, os, cPickle as pickle
+import numpy as np, os, pickle as pickle
 
 class STATS(object):
 
     def __init__(self, stat_identifier=None, output_dir=None, overwrite=False):
         self.output_dir  = output_dir if output_dir else os.path.join(pitas.config.get_default_output_dir(), 'stats')
         if pitas.mpi.rank == 0 : 
-            print "[STATS] output_dir is %s" %self.output_dir
+            print("[STATS] output_dir is %s" %self.output_dir)
             pitas.pitas_io.create_dir(self.output_dir)
         pitas.mpi.barrier()
 
@@ -23,9 +23,9 @@ class STATS(object):
         try:
             assert(not overwrite)
             self.storage = pickle.load(open(self.output_file, 'r'))
-            if pitas.mpi.rank == 0: print "[STATS] loaded %s" %self.output_file
+            if pitas.mpi.rank == 0: print("[STATS] loaded %s" %self.output_file)
         except:
-            if pitas.mpi.rank == 0: print "[STATS] starting from scratch"
+            if pitas.mpi.rank == 0: print("[STATS] starting from scratch")
 
     def add_data(self, data_key, data_idx, data, safe=False):
         if not self.storage.has_key(data_key): self.storage[data_key] = {}
@@ -36,7 +36,7 @@ class STATS(object):
             self.storage[data_key][data_idx] = data
 
     def collect_data(self, dest=0):
-        print "[STATS] collecting data"
+        print("[STATS] collecting data")
         
         if pitas.mpi.is_mpion():
             pitas.mpi.transfer_data(self.storage, self.tag, dest=dest, mode='merge')
@@ -50,15 +50,15 @@ class STATS(object):
         ### passing all data through mpi is through. save it and reload it
         try: 
             self.storage = pickle.load(open(self.output_file, 'r'))
-            if pitas.mpi.rank == 0: print "[STATS] loaded %s" %self.output_file
+            if pitas.mpi.rank == 0: print("[STATS] loaded %s" %self.output_file)
         except:
-            if pitas.mpi.rank == 0: print "[STATS] failed to reload data"
+            if pitas.mpi.rank == 0: print("[STATS] failed to reload data")
 
     def save_data(self, root=0, reload_st=True):
         self.collect_data()
        
         if pitas.mpi.rank == root:
-            print "[STATS] saving %s from root %d" %(self.output_file, root)
+            print("[STATS] saving %s from root %d" %(self.output_file, root))
             with open(self.output_file, 'w') as handle:
                 pickle.dump(self.storage, handle)
         else: pass
@@ -68,13 +68,13 @@ class STATS(object):
     def get_stats(self, subset_idxes=None, save_data=True):
         if save_data: self.save_data(reload_st=True)
     
-        print "calculating stats"
+        print("calculating stats")
         ret = {}
-        for key in self.storage.keys():
+        for key in list(self.storage.keys()):
             if subset_idxes is None:
-                ret[key] = stats(np.array(self.storage[key].values()))
+                ret[key] = stats(np.array(list(self.storage[key].values())))
             else: 
-                ret[key] = stats(np.array(self.get_subset(subset_idxes, key, False).values()))
+                ret[key] = stats(np.array(list(self.get_subset(subset_idxes, key, False).values())))
 
         self.stats = ret
         return ret
@@ -83,14 +83,14 @@ class STATS(object):
         self.collect_data()
         
         def _purge(data_key, data_idx):
-            print "[STATS] purging %s %d" %(data_idx, data_key) 
+            print("[STATS] purging %s %d" %(data_idx, data_key)) 
             del self.storage[data_key][data_idx] 
 
         if pitas.mpi.rank == 0:
             if data_key is not None:
                 _purge(data_key, data_idx)
             else:
-                for data_key in self.storage.keys():
+                for data_key in list(self.storage.keys()):
                     _purge(data_key, data_idx) 
 
         self.reload_data()
@@ -99,13 +99,13 @@ class STATS(object):
         if collect_data: self.collect_data()
         
         def _collect_subset(data_key, data_idxes):
-            return dict((k, v) for k, v in self.storage[data_key].iteritems() if k in data_idxes)
+            return dict((k, v) for k, v in iter(self.storage[data_key].items()) if k in data_idxes)
         
         ret = {}
         if data_key is not None:
             ret = _collect_subset(data_key, data_idxes)
         else:
-            for data_key in self.storage.keys():
+            for data_key in list(self.storage.keys()):
                 ret[data_key] = _collect_subset(data_key, data_idxes)
 
         return ret

@@ -44,12 +44,12 @@ def init(switch = False):
     if not _initialized:
         _initialized = True
     else:
-        print "MPI is already intialized"
+        print("MPI is already intialized")
         return exit_code 
 
     if not switch:
-        print "WARNING: MPI is turned off by default. Use mpi.init(switch=True) to initialize MPI"
-        print "MPI is turned off"
+        print("WARNING: MPI is turned off by default. Use mpi.init(switch=True) to initialize MPI")
+        print("MPI is turned off")
         return exit_code
     else:
         _switch = True
@@ -60,9 +60,9 @@ def init(switch = False):
         rank    = comm.Get_rank()
         size    = comm.Get_size()
         barrier = comm.Barrier
-        print "MPI: rank %d is initalized" %rank
+        print("MPI: rank %d is initalized" %rank)
 
-    except ImportError, exc:
+    except ImportError as exc:
         sys.stderr.write("IMPORT ERROR: " + __file__ + " (" + str(exc) + "). Could not load mpi4py. MPI will not be used.\n")
 
 def is_initialized():
@@ -94,7 +94,7 @@ def taskrange(imax, imin = 0, shift = 0):
     if not isinstance(imin, int) or not isinstance(imax, int) or not isinstance(shift, int):
         raise TypeError("imin, imax and shift must be integers")
     elif not is_initialized():
-        print "MPI is not yet properly initialized. Are you sure this is what you want to do?"
+        print("MPI is not yet properly initialized. Are you sure this is what you want to do?")
     else:
         pass
 
@@ -102,7 +102,7 @@ def taskrange(imax, imin = 0, shift = 0):
 
     subrange = None
     if ntask <= 0 :
-        print "number of task can't be zero"
+        print("number of task can't be zero")
         subrange = np.arange(0,0) # return zero range
     else:
         if size > ntask:
@@ -122,7 +122,7 @@ def taskrange(imax, imin = 0, shift = 0):
         end        = start + delta
         end        = min(end, imax+1)
 
-        print "rank: %d size: %d ntask: %d start: %d end: %d" %(rank, size, ntask, start, end-1)
+        print("rank: %d size: %d ntask: %d start: %d end: %d" %(rank, size, ntask, start, end-1))
 
         subrange   = np.arange(start, end)
 
@@ -143,11 +143,11 @@ def transfer_data(data, tag, dest=0, mode='append'):
     senders.pop(dest)
 
     if rank != dest:
-        print "rank%d is sending data to rank%d with tag%d" %(rank, dest, tag)
+        print("rank%d is sending data to rank%d with tag%d" %(rank, dest, tag))
         comm.send(data, dest, tag=tag)
     else:
         for sender in senders:
-            print "rank%d is receiving tag%d data from rank%d" %(dest,tag,sender)
+            print("rank%d is receiving tag%d data from rank%d" %(dest,tag,sender))
             if type(data) == dict:
                 recv_data = comm.recv(source=sender, tag=tag)
                 pitas.util.merge_dict(data,recv_data)
