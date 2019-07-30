@@ -9,7 +9,7 @@ import warnings
 from pixell import enmap
 
 class PITAS(object):
-    def __init__(self, mcm_identifier, window_scalar, window_pol, bin_edges, lmax=None, transfer=None, overwrite=False):
+    def __init__(self, mcm_identifier, window_scalar, window_pol, bin_edges, lmax=None, transfer=None, output_dir=None, overwrite=False):
         self.mcm_identifier = mcm_identifier
         self.window_scalar    = window_scalar
         self.window_pol     = window_pol
@@ -24,7 +24,7 @@ class PITAS(object):
         self.transfer       = transfer
         
         ret = get_mcm_inv(self.mcm_identifier, self.window_scalar, self.window_pol, self.bin_edges,\
-            None, lmax, transfer, overwrite)
+            output_dir, lmax, transfer, overwrite)
         
         self.mcm_cltt_inv     = ret[0].copy(); self.mcm_cltp_inv     = ret[1].copy()
         self.mcm_clpp_inv     = ret[2].copy(); self.mcm_dltt_inv     = ret[3].copy()
@@ -33,7 +33,7 @@ class PITAS(object):
         del ret
 
         ret                 = get_bbl(self.mcm_identifier, self.window_scalar, self.window_pol, bin_edges,\
-                             None, lmax, transfer, False)
+                             output_dir, lmax, transfer, False)
 
         self.bbl_cltt = ret[0].copy();  self.bbl_cltp = ret[1].copy()
         self.bbl_clpp = ret[2].copy();  self.bbl_dltt = ret[3].copy()
