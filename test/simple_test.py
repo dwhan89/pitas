@@ -16,12 +16,12 @@ resource_path = lambda x: os.path.join(resource_dir, x)
 pitas.pitas_io.create_dir(output_dir)
 
 # miscs 
-lmax      = 5100
+lmax      = 3000
 bin_edges = pitas.util.get_default_bin_edges(lmax)
 taper     = enmap.read_fits(resource_path('test_taper.fits'))
 
 # initialize pitas (if it is a first time, it will take few minutes to compute mode coupling) 
-overwrite      = False
+overwrite      = True
 transfer       = None # no transfer function here
 mcm_identifier = "simple_test" # we can tag mode coupling matrix with a string. If PITAS finds the precomputed mcm with the same tag, it automatically reloads. Set overwrite=True if you don't want this.
 pitas_lib      = pitas.power.PITAS(mcm_identifier, taper, taper, bin_edges, lmax, transfer, overwrite)

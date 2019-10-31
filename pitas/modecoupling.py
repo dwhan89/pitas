@@ -5,7 +5,7 @@ from pitas.mcm_core import mcm_core
 import pitas, numpy as np, os 
 import warnings
 
-def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, transfer=None):
+def generate_mcm(window_temp, window_pol, bin_edges, mcm_dir=None, lmax=None, transfer=None, save_raw=False):
     # expect enmap
     warnings.warn('[pitas/modecoupling] generating mcm')
 
@@ -148,7 +148,7 @@ class PITAS_BINNER(object):
 
         lmax      = int(np.max(bin_edges) if lmax is None else lmax)
         assert(lmax >= 0.)
-        
+       
         bin_edges    = bin_edges.astype(np.int)
         bin_edges[0] = 2
 

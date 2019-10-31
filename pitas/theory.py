@@ -20,6 +20,7 @@ def load_theory_cls(mode, unit='camb', l_interp = None, load_dls=True, fill_valu
             'bode_almost_wmap5_lmax_1e4_lensed': 'bode_almost_wmap5_lmax_1e4_lensedCls.dat',\
             'bode_almost_wmap5_lmax_1e4_scal': 'bode_almost_wmap5_lmax_1e4_scalCls.dat',\
             'cosmo2017_10K_acc3_lensed': 'cosmo2017_10K_acc3_lensedCls.dat',\
+            'cosmo2017_10K_acc3_lensed_extended': 'cosmo2017_10K_acc3_lensedCls_extended.dat',\
             'cosmo2017_10K_acc3_unlensed': 'cosmo2017_10K_acc3_scalCls.dat'
             }
 
@@ -37,7 +38,8 @@ def load_theory_cls(mode, unit='camb', l_interp = None, load_dls=True, fill_valu
     theo = np.loadtxt(path2file)
     cls = {}
   
-    if mode in  ['non-linear_lensed', 'bode_almost_wmap5_lmax_1e4_lensed','cosmo2017_10K_acc3_lensed']:
+    if mode in  ['non-linear_lensed', 'bode_almost_wmap5_lmax_1e4_lensed','cosmo2017_10K_acc3_lensed',\
+            'cosmo2017_10K_acc3_lensed_extended']:
         l    = theo[:,0]
 
         dltt = theo[:,1]

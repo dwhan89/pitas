@@ -40,25 +40,41 @@ class PITAS(object):
         self.bbl_dltp = ret[4].copy();  self.bbl_dlpp = ret[5].copy()
         del ret
 
-    def bin_theory_scalarxscalar(self, l_th, cl_th, ret_dl=False):
+    def __pad_spec__(self, l_th, spec, olen):
+        clen = len(l_th)
+        npad = olen - clen
+        if npad > 0:
+            print("adding %d padding to spectrum" %npad)
+            l_th = np.arange(olen) + 2.
+            spec = np.append(spec, np.zeros(npad))
+        else: pass
+
+        return (l_th, spec)
+        
+
+
+    def bin_theory_scalarxscalar(self, l_th, cl_th, ret_dl=False, pad_spec=True):
         ''' return dl=l(l+1)cl/(2pi) if ret_dl == True '''
         assert(l_th[0] == 2)
         bbl = self.bbl_cltt if ret_dl == False else self.bbl_dltt
         if ret_dl: cl_th = l_th*(l_th+1.)/(2.*np.pi)*cl_th
+        if pad_spec: l_th, cl_th = self.__pad_spec__(l_th, cl_th, bbl.shape[1]) 
+
         spec_bin = np.dot(bbl, cl_th[:self.lmax])
 
         return (self.bin_center.copy(), spec_bin)
 
-    def bin_theory_scalarxvector(self, l_th, cl_th, ret_dl=False):
+    def bin_theory_scalarxvector(self, l_th, cl_th, ret_dl=False, pad_spec=True):
         ''' return dl=l(l+1)cl/(2pi) if ret_dl == True '''
         assert(l_th[0] == 2)
         bbl = self.bbl_cltp if ret_dl == False else self.bbl_dltp
         if ret_dl: cl_th = l_th*(l_th+1.)/(2.*np.pi)*cl_th
+        if pad_spec: l_th, cl_th = self.__pad_spec__(l_th, cl_th, bbl.shape[1]) 
         spec_bin = np.dot(bbl, cl_th[:self.lmax])
 
         return (self.bin_center.copy(), spec_bin)
 
-    def bin_theory_pureeb(self, l_th, clee_th, cleb_th, clbb_th, ret_dl=False):
+    def bin_theory_pureeb(self, l_th, clee_th, cleb_th, clbb_th, ret_dl=False, pad_spec=True):
         ''' return dl=l(l+1)cl/(2pi) if ret_dl == True '''
         assert(l_th[0] == 2)
         bbl = self.bbl_clpp if ret_dl == False else self.bbl_dlpp
@@ -68,6 +84,12 @@ class PITAS(object):
             cleb_th = l_th*(l_th+1.)/(2.*np.pi)*cleb_th
             clbb_th = l_th*(l_th+1.)/(2.*np.pi)*clbb_th
         else: pass
+
+        if pad_spec: 
+            olen = bbl.shape[1]/3
+            _, clee_th    = self.__pad_spec__(l_th.copy(), clee_th, olen)
+            _, cleb_th    = self.__pad_spec__(l_th.copy(), cleb_th, olen)
+            l_th, clbb_th = self.__pad_spec__(l_th.copy(), clbb_th, olen)
 
         clpp_th  = np.concatenate([clee_th[:self.lmax],cleb_th[:self.lmax],clbb_th[:self.lmax]])
         spec_bin = np.dot(bbl , clpp_th)
