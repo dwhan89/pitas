@@ -1,15 +1,15 @@
-import pitas_io
-import config
-import power
-import wigner
-import modecoupling
-import mcm_core
-import util
-import visualize
-import mpi
-import stats
-import flipper_tools
-import act_analysis
-import constants
-import theory
-import pitas_math
+from . import pitas_io
+from . import config
+from . import power
+from . import wigner
+from . import modecoupling
+from . import mcm_core
+from . import util
+from . import visualize
+from . import mpi
+from . import stats
+from . import flipper_tools
+from . import act_analysis
+from . import constants
+from . import theory
+from . import pitas_math

@@ -125,7 +125,7 @@ def get_sim(sim_idx, beam_fwhm=beam_fwhm, noise_level=noise_level):
 
 
 # bin the theory
-for idx in theo.keys():
+for idx in list(theo.keys()):
     if idx == 'l' or 'dl' in idx or 'te' in idx: continue 
     noise_fact     = 1. * 2.**((2-idx[-2:].count('t'))/4.)
     dlidx          = 'dl%s' %idx[-2:]
@@ -238,10 +238,10 @@ for sim_idx in subtasks:
 
 cmblens.mpi.barrier()
 purge = []
-for idx in st.storage['dltt_deconv'].keys():
+for idx in list(st.storage['dltt_deconv'].keys()):
     if np.max(st.storage['dltt_deconv'][idx]) > 50000: purge.append(idx)
 
-for key in st.storage.keys():
+for key in list(st.storage.keys()):
     for idx in purge:
         log.info("purging %s %d" %(key, idx))
         del st.storage[key][idx] 

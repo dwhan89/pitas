@@ -28,7 +28,7 @@ def load_theory_cls(mode, unit='camb', l_interp = None, load_dls=True, fill_valu
 
     if file_dict.has_key(mode):
         path2file = os.path.join(pitas.config.get_resource_dir(), file_dict[mode])
-        print "loading %s" %path2file
+        print("loading %s" %path2file)
     else:
         raise ValueError("%s is not supported" %mode)
 
@@ -97,15 +97,15 @@ def load_theory_cls(mode, unit='camb', l_interp = None, load_dls=True, fill_valu
         raise ValueError()
         
     if unit == 'uk':
-        print "converting theory to %s"
-        for key in cls.keys():
+        print("converting theory to %s")
+        for key in list(cls.keys()):
             if key == 'l': continue
             else         : cls[key] /= TCMB**2
     else: pass
 
     if l_interp is not None:
-        print "interpolating"
-        for key in cls.keys():
+        print("interpolating")
+        for key in list(cls.keys()):
             if key == 'l': continue
             else         : cls[key] = interp1d(cls['l'], cls[key], bounds_error=False, fill_value=fill_value)(l_interp)
         cls['l'] = l_interp
@@ -117,7 +117,7 @@ def load_theory_func(mode, unit='camb', fill_value=np.nan):
     cls = load_theory_cls(mode, unit)
     l   = cls['l']
 
-    for key in cls.keys():
+    for key in list(cls.keys()):
         if key == ['l']: continue
         else           : cls[key] = interp1d(l, cls[key], bounds_error=False, fill_value=fill_value)
 

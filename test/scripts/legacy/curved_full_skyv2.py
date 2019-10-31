@@ -8,7 +8,7 @@ import cmblens, cusps
 import cmblens.flipper as flipper
 from orphics import maps, io, stats
 from itertools import product
-import numpy as np, cPickle as pickle
+import numpy as np, pickle as pickle
 import os, mapTools, sys
 import fftPol
 from actsims import simTools as act_sim
@@ -72,14 +72,14 @@ theo     = cmblens.delensing.theory.load_theory_cls('cosmo2017_10K_acc3_cmb', un
 l_th = theo['l']
 
 ltheo_bin = {}
-for key in theo['lensed'].keys():
+for key in list(theo['lensed'].keys()):
     if key == 'l': continue
     llbin, lclbin = binner.binned(l_th, theo['lensed'][key])
     ltheo_bin['l']  = llbin
     ltheo_bin[key]  = lclbin
 
 utheo_bin = {}
-for key in theo['unlensed'].keys():
+for key in list(theo['unlensed'].keys()):
     if key == 'l': continue
     ulbin, uclbin = binner.binned(l_th, theo['unlensed'][key])
     utheo_bin['l']  = ulbin

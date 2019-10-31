@@ -112,10 +112,10 @@ def has_key(nested_dict, keys):
     if not type(nested_dict) == dict: return False
 
     if(len(keys) > 1):
-        has_it = nested_dict.has_key(keys[0])
+        has_it = keys[0] in nested_dict
         return has_key(nested_dict[keys[0]], keys[1:]) if has_it else False
     else:
-        return nested_dict.has_key(keys[0])
+        return keys[0] in nested_dict
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -207,7 +207,7 @@ def parse_argparse(args, exclude=[]):
     for idx in exclude:
         args_dict.pop(idx)
     
-    keys = args_dict.keys()
+    keys = list(args_dict.keys())
     keys.sort()
 
     ret = ""

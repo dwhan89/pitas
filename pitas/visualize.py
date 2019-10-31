@@ -71,7 +71,7 @@ class plotter(object):
         self.ax.axhline(y=y, **kwargs)
 
     def save(self, output):
-        print "saving %s" %output
+        print("saving %s" %output)
         self.fig.savefig(output)
         self.clear()
 

@@ -9,7 +9,7 @@ import warnings
 from pixell import enmap
 
 class PITAS(object):
-    def __init__(self, mcm_identifier, window_scalar, window_pol, bin_edges, lmax=None, transfer=None, overwrite=False):
+    def __init__(self, mcm_identifier, window_scalar, window_pol, bin_edges, lmax=None, transfer=None, output_dir=None, overwrite=False):
         self.mcm_identifier = mcm_identifier
         self.window_scalar    = window_scalar
         self.window_pol     = window_pol
@@ -24,7 +24,7 @@ class PITAS(object):
         self.transfer       = transfer
         
         ret = get_mcm_inv(self.mcm_identifier, self.window_scalar, self.window_pol, self.bin_edges,\
-            None, lmax, transfer, overwrite)
+            output_dir, lmax, transfer, overwrite)
         
         self.mcm_cltt_inv     = ret[0].copy(); self.mcm_cltp_inv     = ret[1].copy()
         self.mcm_clpp_inv     = ret[2].copy(); self.mcm_dltt_inv     = ret[3].copy()
@@ -33,7 +33,7 @@ class PITAS(object):
         del ret
 
         ret                 = get_bbl(self.mcm_identifier, self.window_scalar, self.window_pol, bin_edges,\
-                             None, lmax, transfer, False)
+                             output_dir, lmax, transfer, False)
 
         self.bbl_cltt = ret[0].copy();  self.bbl_cltp = ret[1].copy()
         self.bbl_clpp = ret[2].copy();  self.bbl_dltt = ret[3].copy()
@@ -206,14 +206,14 @@ def l2e(lmap):
 def get_bbl(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=None, output_dir=None, lmax=None, transfer=None, overwrite=False): 
     if output_dir is None: output_dir = pitas.config.get_output_dir()
     if mcm_identifier is not None: mcm_dir = os.path.join(output_dir, mcm_identifier)
-    if pitas.mpi.rank == 0: print "[get_bbl] mcm directory: %s" %mcm_dir
+    if pitas.mpi.rank == 0: print("[get_bbl] mcm directory: %s" %mcm_dir)
 
     bbl_cltt, bbl_cltp, bbl_clpp = (None, None, None)
     def load_bbl(key):
         file_name = 'curved_full_BBL_%s.dat' %key
         file_name = os.path.join(mcm_dir, file_name)
         
-        print "trying to load %s" %file_name
+        print("trying to load %s" %file_name)
         return np.loadtxt(file_name)
 
     try:
@@ -223,10 +223,10 @@ def get_bbl(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=None,
         bbl_dltp = load_bbl('DLTP'); bbl_dlpp = load_bbl('DLPP')
     except:
         if pitas.mpi.rank == 0: 
-            print "failed to load mcm. calculating mcm"
+            print("failed to load mcm. calculating mcm")
             pitas.util.check_None(window_scalar, window_pol, bin_edges, mcm_dir)
             mcm.generate_mcm(window_scalar, window_pol, bin_edges, mcm_dir, lmax=lmax, transfer=transfer)
-            print "finish calculating mcm"
+            print("finish calculating mcm")
         else: pass
         pitas.mpi.barrier()
 
@@ -238,14 +238,14 @@ def get_bbl(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=None,
 def get_mcm_inv(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=None, output_dir=None, lmax=None, transfer=None, overwrite=False):
     if output_dir is None: output_dir = pitas.config.get_output_dir()
     if mcm_identifier is not None: mcm_dir = os.path.join(output_dir, mcm_identifier)
-    if pitas.mpi.rank == 0: print "mcm directory: %s" %mcm_dir
+    if pitas.mpi.rank == 0: print("mcm directory: %s" %mcm_dir)
 
     mbb_cltt_inv, mbb_cltp_inv, mbb_clpp_inv = (None, None, None)
     def load_mbb_inv(key):
         file_name = 'curved_full_%s.dat' %key
         file_name = os.path.join(mcm_dir, file_name)
         
-        print "trying to load %s" %file_name
+        print("trying to load %s" %file_name)
         return np.loadtxt(file_name)
 
     try:
@@ -257,10 +257,10 @@ def get_mcm_inv(mcm_identifier, window_scalar=None, window_pol=None, bin_edges=N
         mbb_dlpp_inv = load_mbb_inv('DLPP_inv')
     except:
         if pitas.mpi.rank == 0: 
-            print "failed to load mcm. calculating mcm"
+            print("failed to load mcm. calculating mcm")
             pitas.util.check_None(window_scalar, window_pol, bin_edges, mcm_dir)
             mcm.generate_mcm(window_scalar, window_pol, bin_edges, mcm_dir, lmax=lmax, transfer=transfer)
-            print "finish calculating mcm"
+            print("finish calculating mcm")
         else: pass
         pitas.mpi.barrier()
 

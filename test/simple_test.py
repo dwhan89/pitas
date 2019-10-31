@@ -72,7 +72,7 @@ theory_bin    = {'tt':clttbin_th, 'ee':cleebin_th, 'bb':clbbbin_th, 'te':cltebin
 dlspectra     = {'tt':dltt, 'ee':dlee, 'bb':dlbb, 'te':dlte}
 theory_dlbin  = {'tt':dlttbin_th, 'ee':dleebin_th, 'bb':dlbbbin_th, 'te':dltebin_th}
 
-for spec_idx in spectra.keys():
+for spec_idx in list(spectra.keys()):
     clbin      = spectra[spec_idx]
     clth       = spectra[spec_idx]
     yscale     = 'log' if not spec_idx in ['te','bb'] else 'linear'

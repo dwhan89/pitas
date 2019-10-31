@@ -8,7 +8,7 @@ import cmblens, cusps
 import cmblens.flipper as flipper
 from orphics import maps, io, stats
 from itertools import product
-import numpy as np, cPickle as pickle
+import numpy as np, pickle as pickle
 import os, mapTools, sys
 import fftPol
 from actsims import simTools
@@ -123,7 +123,7 @@ del temp
 
 
 ltheo_bin = {}
-for key in theo['lensed'].keys():
+for key in list(theo['lensed'].keys()):
     if key == 'l': continue
     theo_in = np.append([0,0],theo['lensed'][key])
     lclbin = cmblens.power.get_bbl_theory(theo_in, 5000, mcm_postfix=mcm_postfix, bin_file=bin_file)    
@@ -132,7 +132,7 @@ for key in theo['lensed'].keys():
     ltheo_bin[key]  = lclbin
 
 utheo_bin = {}
-for key in theo['unlensed'].keys():
+for key in list(theo['unlensed'].keys()):
     if key == 'l': continue
     theo_in = np.append([0,0],theo['unlensed'][key])
 
