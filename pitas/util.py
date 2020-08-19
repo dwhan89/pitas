@@ -1,97 +1,91 @@
-#-
+# -
 # util.py
-#-
+# -
 #
 from pixell import enmap, curvedsky
 from pixell import utils as eutils
 import healpy as hp, numpy as np
 from scipy.interpolate import interp1d, interp2d, RectBivariateSpline
-#from scipy.interpolate import griddata
+
+
+# from scipy.interpolate import griddata
 
 ############ fsky ###################
 def get_fsky(emap):
-    area = emap.area() #in rad sq#
-    fsky = area / (4.*np.pi)
+    area = emap.area()  # in rad sq#
+    fsky = area / (4. * np.pi)
     return fsky
+
 
 ############ spectra ################
 def get_spectra(emap1, emap2=None, lmax=5000):
-    atol = np.min(np.array(emap1.pixshape()/eutils.arcmin))
+    atol = np.min(np.array(emap1.pixshape() / eutils.arcmin))
 
     alm1 = curvedsky.map2alm(emap1, lmax=lmax, atol=atol).astype(np.complex128)
     alm2 = alm1 if emap2 is None else curvedsky.map2alm(emap2, lmax=lmax, atol=atol).astype(np.complex128)
 
-    cl  = hp.alm2cl(alm1, alm2, lmax=lmax)
-    l   = np.arange(len(cl))
+    cl = hp.alm2cl(alm1, alm2, lmax=lmax)
+    l = np.arange(len(cl))
 
     return (l, cl)
 
+
 def check_None(*args):
     for arg in args:
-        assert(arg is not None)
+        assert (arg is not None)
     return True
 
+
 def cl2dl(l, cl):
-    return cl*(l*(l+1.))/(2*np.pi)
+    return cl * (l * (l + 1.)) / (2 * np.pi)
+
 
 def get_cl2dl_factor(clth_bin, dlth_bin):
     # calculate cl2dl_fact such that
     # cl2dl_fact * Sum_{l\in b} Cl  = Sum_{l\in b} l(l+1)/Cl/2pi 
-    cl2dl_fact = dlth_bin/clth_bin
+    cl2dl_fact = dlth_bin / clth_bin
     return cl2dl_fact
-    
+
+
 ############# maps #################
 def tqu2teb(tmap, qmap, umap, lmax):
-    atol = np.min(np.array(tmap.pixshape()/eutils.arcmin))
-    tqu     = np.zeros((3,)+tmap.shape)
+    atol = np.min(np.array(tmap.pixshape() / eutils.arcmin))
+    tqu = np.zeros((3,) + tmap.shape)
     tqu[0], tqu[1], tqu[2] = (tmap, qmap, umap)
-    tqu     = enmap.enmap(tqu, tmap.wcs)
-    alm     = curvedsky.map2alm(tqu, lmax=lmax, atol=atol)
+    tqu = enmap.enmap(tqu, tmap.wcs)
+    alm = curvedsky.map2alm(tqu, lmax=lmax, atol=atol)
 
-    teb     = curvedsky.alm2map(alm[:,None], tqu.copy()[:,None], spin=0)[:,0]
+    teb = curvedsky.alm2map(alm[:, None], tqu.copy()[:, None], spin=0)[:, 0]
     del tqu
 
-    return (teb[0], teb[1], teb[2]) #tmap, emap, bmap
+    return (teb[0], teb[1], teb[2])  # tmap, emap, bmap
+
 
 def pixelwindow2tqu(tmap, qmap, umap, mode='conv'):
-    assert(mode in ['conv', 'deconv'])
+    assert (mode in ['conv', 'deconv'])
     maps = [tmap, qmap, umap]
     wfact = 1. if mode == 'conv' else -1.
-    log.info('[delensing/maps] pixel window %s' %mode)
+    log.info('[delensing/maps] pixel window %s' % mode)
     for i in range(3):
-        imap    = enmap.apply_window(imap, wfact)
+        imap = enmap.apply_window(imap, wfact)
 
     return (maps[0], maps[1], maps[2])
+
 
 def interp_enmap(emap, nshape, nwcs, method='cubic', fill_value=np.nan):
     # interpolate enmap to the new shape, and override wcs 
     oshape, owcs = emap.shape, emap.wcs
     if nshape == oshape: return emap
-    oxm, oym     = enmap.posmap(oshape, owcs)
-    nxm, nym     = enmap.posmap(nshape, nwcs)
+    oxm, oym = enmap.posmap(oshape, owcs)
+    nxm, nym = enmap.posmap(nshape, nwcs)
 
-    oxm, oym     = oxm[:,0], oym[0,:]
-    nxm, nym     = nxm[:,0], nym[0,:]
-    
-    f2       = RectBivariateSpline(oxm, oym, emap)
-    #f2 = interp2d(oxm, oym, emap, kind=method, bounds_error=False, fill_value=fill_value)
-    ndata    = f2(nxm, nym)
+    oxm, oym = oxm[:, 0], oym[0, :]
+    nxm, nym = nxm[:, 0], nym[0, :]
+
+    f2 = RectBivariateSpline(oxm, oym, emap)
+    ndata = f2(nxm, nym)
 
     return enmap.enmap(ndata, nwcs)
-
-
-    #oy  = np.arange(oshape[0])
-    #ox  = np.arange(oshape[1])
-    #ny  = np.linspace(0, oshape[0]-1., nshape[0])
-    #nx  = np.linspace(0, oshape[1]-1., nshape[1])
-    
-    #oxm, oym = np.meshgrid(ox, oy)
-
-    #nxm, nym = np.meshgrid(nx, ny)
-
-    #ndata    = griddate(opos, np.array(emap), npos, method=method, fill_vaule=fill_value)
-
-
 
 
 ############# misc #################
@@ -100,7 +94,7 @@ def get_from_dict(nested_dict, keys, safe=True):
     if not type(keys) is tuple: keys = (keys,)
     if safe and not has_key(nested_dict, keys): return None
 
-    if(len(keys) > 1):
+    if (len(keys) > 1):
         return get_from_nested_dict(nested_dict[keys[0]], keys[1:], False)
     else:
         return nested_dict[keys[0]]
@@ -111,11 +105,12 @@ def has_key(nested_dict, keys):
     if not type(keys) is tuple: keys = (keys,)
     if not type(nested_dict) == dict: return False
 
-    if(len(keys) > 1):
+    if (len(keys) > 1):
         has_it = keys[0] in nested_dict
         return has_key(nested_dict[keys[0]], keys[1:]) if has_it else False
     else:
         return keys[0] in nested_dict
+
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -125,7 +120,8 @@ def str2bool(v):
     else:
         raise TypeException("Can't convert 'str' object to 'boolean'")
 
-def merge_dict(a, b, path=None, clean = True):
+
+def merge_dict(a, b, path=None, clean=True):
     '''
     merges b into a
 
@@ -143,7 +139,7 @@ def merge_dict(a, b, path=None, clean = True):
             elif isinstance(a[key], np.ndarray) and np.array_equal(a[key], b[key]):
                 pass
             elif a[key] == b[key]:
-                pass # same leaf value
+                pass  # same leaf value
             else:
                 raise Exception('Conflict at %s' % '.'.join(path + [str(key)]))
         else:
@@ -152,6 +148,7 @@ def merge_dict(a, b, path=None, clean = True):
     if clean: del b
 
     return a
+
 
 '''
 def get_default_bin_edges(lmax, lmin=0):
@@ -171,42 +168,44 @@ def get_default_bin_edges(lmax, lmin=0):
     return bin_edges
 '''
 
-def get_default_bin_edges(lmax): 
-    assert(lmax > 0)
-    nbin      = int(lmax/100.)    
+
+def get_default_bin_edges(lmax):
+    assert (lmax > 0)
+    nbin = int(lmax / 100.)
     if nbin == 0: nbin = 1
 
-    bin_edges = np.linspace(0, lmax, nbin+1)
+    bin_edges = np.linspace(0, lmax, nbin + 1)
     return bin_edges
 
 
 def get_transfer_kxky_filter(kx, ky, lmax):
-    l_trans  = np.arange(lmax+1)
+    l_trans = np.arange(lmax + 1)
     transfer = np.ones(len(l_trans))
 
-    lmin     = np.floor(np.sqrt(kx**2 + ky**2))
+    lmin = np.floor(np.sqrt(kx ** 2 + ky ** 2))
 
     for idx, l in enumerate(l_trans):
-        if l <= lmin: 
+        if l <= lmin:
             transfer[idx] = 0.
         else:
-            theta1 = np.arcsin(float(ky)/l)
-            theta2 = np.arcsin(float(kx)/l)
-            
-            transfer[idx] = 2.*np.pi*l
-            transfer[idx] += -4.*(theta1+theta2)*l
-            transfer[idx] /= 2.*np.pi*l
+            theta1 = np.arcsin(float(ky) / l)
+            theta2 = np.arcsin(float(kx) / l)
+
+            transfer[idx] = 2. * np.pi * l
+            transfer[idx] += -4. * (theta1 + theta2) * l
+            transfer[idx] /= 2. * np.pi * l
 
             if transfer[idx] < 0.: transfer[idx] = 0.
 
     transfer = np.sqrt(transfer)
-    return (l_trans, transfer )
+    return (l_trans, transfer)
+
 
 def parse_argparse(args, exclude=[]):
     args_dict = vars(args)
     for idx in exclude:
         args_dict.pop(idx)
-    
+
     keys = list(args_dict.keys())
     keys.sort()
 
@@ -226,24 +225,16 @@ def interp(x, fx, y, fill_value=0., bounds_error=False):
 
 
 def cos_highpass(lmax, lmin=0, l_trim=20000):
-    l = np.arange(l_trim +1.)
+    l = np.arange(l_trim + 1.)
     f = np.ones(len(l))
-    
-    loc    = np.where(l < lmin)
-    f[loc] = 0.
-    
-    loc    = np.where((l>=lmin)&(l<=lmax))
-    l_sub  = l[loc]
 
-    cos_filt = np.cos((l_sub-lmax)/(lmax-lmin)*np.pi/2.)
-    f[loc]   = cos_filt
+    loc = np.where(l < lmin)
+    f[loc] = 0.
+
+    loc = np.where((l >= lmin) & (l <= lmax))
+    l_sub = l[loc]
+
+    cos_filt = np.cos((l_sub - lmax) / (lmax - lmin) * np.pi / 2.)
+    f[loc] = cos_filt
 
     return (l, f)
-
-
-
-
-
-
-
-
