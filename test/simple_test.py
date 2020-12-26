@@ -1,7 +1,7 @@
 import pitas
 from pitas import power
 from pitas.util import cl2dl
-from enlib import enmap, curvedsky, powspec
+from pixell import enmap, curvedsky, powspec
 import numpy as np
 import os, sys
 
@@ -24,7 +24,7 @@ taper     = enmap.read_fits(resource_path('test_taper.fits'))
 overwrite      = True
 transfer       = None # no transfer function here
 mcm_identifier = "simple_test" # we can tag mode coupling matrix with a string. If PITAS finds the precomputed mcm with the same tag, it automatically reloads. Set overwrite=True if you don't want this.
-pitas_lib      = pitas.power.PITAS(mcm_identifier, taper, taper, bin_edges, lmax, transfer, overwrite)
+pitas_lib      = pitas.power.PITAS(mcm_identifier, taper, taper, bin_edges, lmax, transfer, overwrite=overwrite, output_dir=None)
 binner         = pitas_lib.binner
 lbin           = pitas_lib.bin_center
 
